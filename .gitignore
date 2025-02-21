@@ -1,0 +1,51 @@
+# =========================
+# Python & Virtual Env
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environments
+venv/
+.env/
+.venv/
+
+# Ignore environment variables and credentials
+.env
+*.json
+config.json
+secrets.json
+
+# Ignore session files (to prevent sharing login sessions)
+*_session.json
+
+# =========================
+# Logs & Debug Files
+# =========================
+*.log
+*.out
+*.err
+
+# =========================
+# System & Editor Files
+# =========================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.bak
+*.tmp
+.idea/
+.vscode/
+*.~undo-tree~
+
+# =========================
+# Git & Dependency Files
+# =========================
+.git/
+.gitignore
+node_modules/
+package-lock.json
+yarn.lock
+pip-log.txt

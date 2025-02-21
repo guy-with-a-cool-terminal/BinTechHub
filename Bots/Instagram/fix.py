@@ -14,18 +14,19 @@ class InstagramBot:
         self.session_file = f"{username}_session.json"
         self.client = Client()
         self.ua = UserAgent()
+        
+        # Proxy Configuration (Update this if needed)
         self.proxy_list = [
-            "socks5://your_proxy_ip:1080",
-            "socks5://another_proxy_ip:1080",
+            "socks5://brian_proxy:12248326@127.0.0.1:1080"
         ]
         
-        # Action Limits
+        # Action Limits (Randomized)
         self.follow_limit_per_burst = random.randint(5, 10)
         self.unfollow_limit_per_burst = random.randint(5, 10)
         self.like_limit_per_burst = random.randint(10, 20)
         self.comment_limit_per_burst = random.randint(3, 7)
 
-        # Cooldowns
+        # Cooldowns (Randomized)
         self.follow_cooldown = (30, 90)
         self.unfollow_cooldown = (30, 90)
         self.like_cooldown = (10, 30)
@@ -33,23 +34,30 @@ class InstagramBot:
         self.burst_pause = (300, 600)
         self.unfollow_after_days = 7
 
-    # 🔥 Selects a working proxy
+    # 🔥 Get a working proxy
     def get_random_proxy(self):
-        proxy = random.choice(self.proxy_list)
-        while not self.check_proxy(proxy):
-            print(f"❌ Bad proxy: {proxy}, selecting another...")
+        for _ in range(len(self.proxy_list)):
             proxy = random.choice(self.proxy_list)
-        return proxy
+            if self.check_proxy(proxy):
+                print(f"✅ Using Proxy: {proxy}")
+                return proxy
+            print(f"❌ Proxy Failed: {proxy}")
+        print("⚠️ No working proxies available!")
+        exit()
 
-    # 🔥 Checks if a proxy is working
+    # 🔥 Check if a proxy works
     def check_proxy(self, proxy):
+        proxies = {"http": f"socks5h://{proxy}", "https": f"socks5h://{proxy}"}
         try:
-            response = requests.get("https://www.instagram.com", proxies={"http": proxy, "https": proxy}, timeout=5)
-            return response.status_code == 200
+            response = requests.get("https://api.ipify.org", proxies=proxies, timeout=5)
+            if response.status_code == 200:
+                print(f"✅ Proxy IP: {response.text}")
+                return True
         except requests.RequestException:
-            return False
+            pass
+        return False
 
-    # 🔥 Sets up the client with proxy and user-agent
+    # 🔥 Setup Client with Proxy & User-Agent
     def setup_client(self):
         proxy = self.get_random_proxy()
         headers = {"User-Agent": self.ua.random}
@@ -57,9 +65,9 @@ class InstagramBot:
         self.client.set_proxy(proxy)
         self.client.set_headers(headers)
         
-        print(f"🔄 Using proxy: {proxy} | User-Agent: {headers['User-Agent']}")
+        print(f"🔄 Using Proxy: {proxy} | User-Agent: {headers['User-Agent']}")
 
-    # 🔥 Loads session if available
+    # 🔥 Load session if available
     def load_session(self):
         if os.path.exists(self.session_file):
             try:
@@ -72,11 +80,11 @@ class InstagramBot:
                 os.remove(self.session_file)
         return False
 
-    # 🔥 Saves session after login
+    # 🔥 Save session after login
     def save_session(self):
         self.client.dump_settings(self.session_file)
 
-    # 🔥 Logs into Instagram
+    # 🔥 Login to Instagram
     def login(self):
         if self.load_session():
             return
@@ -94,7 +102,7 @@ class InstagramBot:
             print(f"⚠️ Error during login: {e}")
             exit()
 
-    # 🔥 Gets target users (followers of a niche account)
+    # 🔥 Get target users (followers of a niche account)
     def get_target_users(self, count=50):
         try:
             user_id = self.client.user_id_from_username(self.target_account)
@@ -104,7 +112,7 @@ class InstagramBot:
             print(f"⚠️ Error getting target users: {e}")
             return []
 
-    # 🔥 Likes recent posts before following
+    # 🔥 Like recent posts before following
     def like_recent_posts(self, target_users):
         liked_count = 0
         for user in target_users:
@@ -121,7 +129,7 @@ class InstagramBot:
                 print(f"⚠️ Error liking posts of {user.username}: {e}")
                 time.sleep(30)
 
-    # 🔥 Follows users in bursts
+    # 🔥 Follow users in bursts
     def follow_users(self, target_users):
         followed_count = 0
         for user in target_users:
@@ -139,7 +147,7 @@ class InstagramBot:
                 print(f"⚠️ Error following {user.username}: {e}")
                 time.sleep(60)
 
-    # 🔥 Unfollows non-followers in bursts
+    # 🔥 Unfollow non-followers in bursts
     def unfollow_non_followers(self):
         unfollowed_count = 0
         followers = self.client.user_followers(self.client.user_id)
@@ -161,7 +169,7 @@ class InstagramBot:
                     print(f"⚠️ Error unfollowing {user.username}: {e}")
                     time.sleep(60)
 
-    # 🔥 Main execution flow
+    # 🔥 Main Execution Flow
     def run(self):
         self.setup_client()
         self.login()
