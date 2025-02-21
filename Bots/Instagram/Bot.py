@@ -47,25 +47,28 @@ class InstagramBot:
 
     # 🔥 Check if a proxy works
     def check_proxy(self, proxy):
-        proxies = {"http": f"socks5h://{proxy}", "https": f"socks5h://{proxy}"}
+        proxies = {"http": proxy, "https": proxy}
         try:
             response = requests.get("https://api.ipify.org", proxies=proxies, timeout=5)
             if response.status_code == 200:
                 print(f"✅ Proxy IP: {response.text}")
                 return True
-        except requests.RequestException:
-            pass
+        except requests.RequestException as e:
+            print(f"❌ Proxy check failed: {e}")
         return False
 
     # 🔥 Setup Client with Proxy & User-Agent
     def setup_client(self):
         proxy = self.get_random_proxy()
-        headers = {"User-Agent": self.ua.random}
-        
-        self.client.set_proxy(proxy)
-        self.client.set_headers(headers)
-        
-        print(f"🔄 Using Proxy: {proxy} | User-Agent: {headers['User-Agent']}")
+
+        # Remove socks5h:// if needed
+        cleaned_proxy = proxy.replace("socks5h://", "socks5://")
+
+        self.client.set_proxy(cleaned_proxy)  
+        self.client.private.headers["User-Agent"] = self.ua.random
+
+        print(f"🔄 Using Proxy: {cleaned_proxy} | User-Agent: {self.client.private.headers['User-Agent']}")
+
 
     # 🔥 Load session if available
     def load_session(self):
