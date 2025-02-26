@@ -1,10 +1,10 @@
 import time
 import random
-import requests
 import os
 from fake_useragent import UserAgent
 from instagrapi import Client
 from instagrapi.exceptions import LoginRequired, ChallengeRequired
+from proxies import ProxyScraper  # Import the ProxyScraper module
 
 class InstagramBot:
     def __init__(self, username, password, target_account):
@@ -14,12 +14,8 @@ class InstagramBot:
         self.session_file = f"{username}_session.json"
         self.client = Client()
         self.ua = UserAgent()
-        
-        # Proxy Configuration (Update this if needed)
-        self.proxy_list = [
-            "socks5://brian_proxy:12248326@127.0.0.1:1080"
-        ]
-        
+        self.proxy_scraper = ProxyScraper()  # Initialize the ProxyScraper
+
         # Action Limits (Randomized)
         self.follow_limit_per_burst = random.randint(5, 10)
         self.unfollow_limit_per_burst = random.randint(5, 10)
@@ -36,12 +32,10 @@ class InstagramBot:
 
     # 🔥 Get a working proxy
     def get_random_proxy(self):
-        for _ in range(len(self.proxy_list)):
-            proxy = random.choice(self.proxy_list)
-            if self.check_proxy(proxy):
-                print(f"✅ Using Proxy: {proxy}")
-                return proxy
-            print(f"❌ Proxy Failed: {proxy}")
+        proxy = self.proxy_scraper.get_random_proxy()
+        if proxy:
+            print(f"✅ Using Proxy: {proxy}")
+            return proxy
         print("⚠️ No working proxies available!")
         exit()
 
@@ -60,15 +54,9 @@ class InstagramBot:
     # 🔥 Setup Client with Proxy & User-Agent
     def setup_client(self):
         proxy = self.get_random_proxy()
-
-        # Remove socks5h:// if needed
-        cleaned_proxy = proxy.replace("socks5h://", "socks5://")
-
-        self.client.set_proxy(cleaned_proxy)  
+        self.client.set_proxy(proxy)
         self.client.private.headers["User-Agent"] = self.ua.random
-
-        print(f"🔄 Using Proxy: {cleaned_proxy} | User-Agent: {self.client.private.headers['User-Agent']}")
-
+        print(f"🔄 Using Proxy: {proxy} | User-Agent: {self.client.private.headers['User-Agent']}")
 
     # 🔥 Load session if available
     def load_session(self):
@@ -86,6 +74,7 @@ class InstagramBot:
     # 🔥 Save session after login
     def save_session(self):
         self.client.dump_settings(self.session_file)
+        print("✅ Session saved successfully.")
 
     # 🔥 Login to Instagram
     def login(self):
@@ -96,23 +85,31 @@ class InstagramBot:
             self.client.login(self.username, self.password)
             self.save_session()
             print("✅ Logged in successfully.")
-        except (LoginRequired, ChallengeRequired) as e:
+        except ChallengeRequired as e:
+            print("⚠️ Challenge required! Please manually resolve the challenge.")
+            print(f"Error: {e}")
+            exit()
+        except LoginRequired as e:
             print(f"⚠️ Login failed: {e}")
-            if isinstance(e, ChallengeRequired):
-                self.client.challenge_resolve(self.client.last_json)
             exit()
         except Exception as e:
             print(f"⚠️ Error during login: {e}")
+            if hasattr(self.client, "last_response"):
+                print(f"Instagram Response: {self.client.last_response}")
             exit()
 
     # 🔥 Get target users (followers of a niche account)
     def get_target_users(self, count=50):
         try:
             user_id = self.client.user_id_from_username(self.target_account)
+            print(f"✅ Fetched user ID for {self.target_account}: {user_id}")
             followers = self.client.user_followers(user_id, amount=count)
+            print(f"✅ Fetched {len(followers)} followers.")
             return list(followers.values())
         except Exception as e:
             print(f"⚠️ Error getting target users: {e}")
+            if hasattr(self.client, "last_response"):
+                print(f"Instagram Response: {self.client.last_response.text}")
             return []
 
     # 🔥 Like recent posts before following
@@ -199,9 +196,9 @@ class InstagramBot:
 
 # 🔥 Run the Bot
 if __name__ == "__main__":
-    USERNAME = "your_instagram_username"
-    PASSWORD = "your_instagram_password"
-    TARGET_ACCOUNT = "target_instagram_account"
+    USERNAME = ""
+    PASSWORD = ""
+    TARGET_ACCOUNT = "instagram"
 
     bot = InstagramBot(USERNAME, PASSWORD, TARGET_ACCOUNT)
     bot.run()
