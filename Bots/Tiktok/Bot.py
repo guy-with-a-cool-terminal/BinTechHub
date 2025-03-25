@@ -130,8 +130,3 @@ bot.send_messages(users_to_message, messages)  # Sends random messages
 bot.close()
 
 
-'''
-techbros166@gmail.com
-1234@tech
-wesuckatprogramming 
-'''

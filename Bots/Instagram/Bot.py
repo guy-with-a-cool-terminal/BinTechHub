@@ -196,8 +196,8 @@ class InstagramBot:
 
 # 🔥 Run the Bot
 if __name__ == "__main__":
-    USERNAME = "wesuckatprogramming"
-    PASSWORD = "johnmuigai"
+    USERNAME = ""
+    PASSWORD = ""
     TARGET_ACCOUNT = "instagram"
 
     bot = InstagramBot(USERNAME, PASSWORD, TARGET_ACCOUNT)
