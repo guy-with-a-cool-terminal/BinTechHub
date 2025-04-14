@@ -1,0 +1,138 @@
+/* General body styling */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 10px;
+    background-color: #2c3e50;  /* Darker background */
+    color: #ecf0f1;  /* Light text color */
+}
+
+/* Main container (adjusted for better fit) */
+#app {
+    width: 300px;
+    min-height: 480px;
+    max-height: 480px;
+    overflow-y: auto;
+    background-color: #34495e; /* Darker grey background */
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Title Styling */
+h2 {
+    text-align: center;
+    font-size: 1.6em;
+    color: #ecf0f1;  /* Light text */
+    margin-bottom: 20px;
+}
+
+/* Timer Section */
+#timer {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Timer text */
+h3 {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+    color: #ecf0f1;
+}
+
+/* Focus time styling */
+#time {
+    display: inline-block;
+    min-width: 60px;
+    font-size: 1.5em;
+    text-align: center;
+    color: #f39c12;  /* Light orange/yellow */
+}
+
+/* Buttons */
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: #1abc9c;  /* Calm turquoise */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 5px 0;
+    transition: background-color 0.3s ease-in-out;
+}
+
+button:disabled {
+    background-color: #7f8c8d; /* Light grey when disabled */
+    cursor: not-allowed;
+}
+
+/* Input fields */
+input[type="text"] {
+    width: calc(100% - 22px);
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #bdc3c7; /* Soft grey border */
+    border-radius: 5px;
+    background-color: #ecf0f1;
+    color: #2c3e50;
+}
+
+/* Section headers */
+h4 {
+    color: #ecf0f1;
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+/* List styling */
+ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+li {
+    padding: 8px;
+    background-color: #95a5a6; /* Soft grey for list items */
+    color: #2c3e50;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    font-size: 0.9em;
+}
+
+/* Strict Mode Section */
+#strictModeToggle {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+#strictMode {
+    margin-right: 5px;
+}
+
+/* Small text for description */
+small {
+    display: block;
+    margin-top: 5px;
+    color: #bdc3c7; /* Lighter grey */
+}
+
+/* Blacklist and Whitelist sections */
+#blacklistSection, #whitelistSection {
+    margin-top: 20px;
+}
+
+/* Styling for list item hover */
+li:hover {
+    background-color: #16a085; /* Subtle hover effect for better user experience */
+    color: white;
+}
+
+/* Add spacing between sections */
+#timer, #strictModeToggle, #blacklistSection, #whitelistSection {
+    margin-bottom: 20px;
+}
