@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Focus Lock</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <h2>Focus Timer</h2>
+
+        <div id="timer">
+            <h3>Focus Time: <span id="time">0</span> sec</h3>
+            <button id="startFocus" class="action-btn">Start Focus</button>
+            <button id="stopFocus" class="action-btn">Stop Focus</button>
+            <button id="resetTimer" class="action-btn">Reset Timer</button>
+        </div>
+
+        <div id="countdownSection">
+            <h4>Start Countdown (minutes)</h4>
+            <input type="number" id="countdownInput" placeholder="e.g. 30">
+            <button id="startCountdownBtn" class="action-btn">Start Countdown</button>
+        </div>
+
+        <div id="strictModeToggle">
+            <label>
+                <input type="checkbox" id="strictMode"> Strict Mode
+            </label>
+            <p><small>Enable to lock your focus completely.</small></p>
+        </div>
+
+        <div id="blacklistSection">
+            <h4>Blacklist</h4>
+            <input type="text" id="addBlacklist" placeholder="Add to blacklist">
+            <button id="addBlacklistBtn" class="action-btn">Add</button>
+            <ul id="blacklistDisplay"></ul>
+        </div>
+
+        <div id="whitelistSection">
+            <h4>Whitelist</h4>
+            <input type="text" id="addWhitelist" placeholder="Add to whitelist">
+            <button id="addWhitelistBtn" class="action-btn">Add</button>
+            <ul id="whitelistDisplay"></ul>
+        </div>
+
+        <div id="extensionControl">
+            <label>
+                <input type="checkbox" id="extensionToggle" checked> Extension Enabled
+            </label>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
