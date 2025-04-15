@@ -7,35 +7,31 @@ export default function PaymentSuccess() {
     <div className="min-h-screen bg-white text-gray-800">
 
       {/* ========== HEADER WITH ACTION BUTTONS ========== */}
-      <header className="w-full flex items-center justify-between px-6 py-4 border-b">
-        <div className="text-xl font-semibold text-gray-800">
-          {/* TODO: Replace "PortalConnect" with dynamic logo or site name from config */}
-          PortalConnect
-        </div>
-        <div className="flex gap-4">
-          <button
-            // TODO: Replace with actual route or function to open purchase screen/modal
-            aria-label="Buy more internet access"
-            className="bg-purple-500 hover:bg-purple-600 text-white font-medium px-6 py-3 rounded text-base"
-          >
-            Buy More
-          </button>
-          <button
-            // This toggles a credits panel locally. Replace content with live data below.
-            onClick={() => setShowCredits(!showCredits)}
-            aria-label="View remaining credits and session time"
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-6 py-3 rounded text-base"
-          >
-            View Credits
-          </button>
-        </div>
-      </header>
+      <header className="sticky top-0 z-50 bg-white w-full flex items-center justify-between px-6 py-4 border-b shadow-sm">
+  <div className="text-xl font-semibold text-gray-800">PortalConnect</div>
+  <div className="flex gap-4">
+        <button
+          aria-label="Buy more internet access"
+          className="bg-purple-500 hover:bg-purple-600 text-white font-medium px-6 py-3 rounded text-base"
+        >
+          Buy More
+        </button>
+        <button
+          onClick={() => setShowCredits(!showCredits)}
+          aria-label="View remaining credits and session time"
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-6 py-3 rounded text-base"
+        >
+          View Credits
+        </button>
+      </div>
+    </header>
 
       {/* ========== SESSION STATUS BANNER ========== */}
-      <div className="bg-yellow-50 text-yellow-800 text-sm p-4 text-center">
-        {/* TODO: Replace hardcoded session time with dynamic data from user/session state */}
+      <div className="sticky top-[64px] z-40 bg-yellow-50 text-yellow-800 text-sm p-4 text-center border-b">
+        {/* Adjust `top-[64px]` if header height changes */}
         You’re currently connected. Your session expires in 3 hours.
       </div>
+
 
       {/* ========== MAIN CONFIRMATION MESSAGE ========== */}
       <main className="flex flex-col items-center justify-start px-4 py-12">
