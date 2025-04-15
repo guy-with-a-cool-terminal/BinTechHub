@@ -17,7 +17,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route index element={<CaptivePortal />} />
           <Route path="success" element={<PaymentSuccess />} />
           <Route path="login" element={<Login />} />
-          <Route path="SignUp" element={<SignUp />} />
+          <Route path="signUp" element={<SignUp />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

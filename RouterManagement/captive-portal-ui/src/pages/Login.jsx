@@ -1,6 +1,13 @@
 import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/20/solid'; // Import icons
+import { useNavigate } from 'react-router-dom'; // import navigate
 
 export default function Login() {
+  const navigate = useNavigate()
+
+  const handleSwitchToSignup = () =>{
+    navigate('/signup');
+}
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       {/* Blurred Background Images (You might need to adjust the image paths) */}
@@ -55,7 +62,7 @@ export default function Login() {
         </form>
         <p className="mt-6 text-sm text-gray-600">
           Need to create an account?{" "}
-          <a href="#" className="text-blue-500 hover:underline">
+          <a href="#" onClick={handleSwitchToSignup} className="text-blue-500 hover:underline">
             Sign Up
           </a>
         </p>
