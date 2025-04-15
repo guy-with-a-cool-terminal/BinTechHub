@@ -7,6 +7,7 @@ import PaymentSuccess from './pages/PaymentSuccess';
 import NotFound from './pages/NotFound';
 import './index.css';
 import Login from './pages/Login';
+import SignUp from './pages/SignUp'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -16,6 +17,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route index element={<CaptivePortal />} />
           <Route path="success" element={<PaymentSuccess />} />
           <Route path="login" element={<Login />} />
+          <Route path="SignUp" element={<SignUp />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
