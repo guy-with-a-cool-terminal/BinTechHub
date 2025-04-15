@@ -12,10 +12,6 @@ const App = () => {
       </main>
       <footer>
         {/* Footer Content */}
-        <div className="text-4xl font-bold text-green-600">
-  Tailwind is active
-</div>
-
       </footer>
     </div>
   );
