@@ -10,7 +10,7 @@ export default function SignUpForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      {/* Blurred Background Images (Adjust paths if needed) */}
+      {}
       <div
         className="fixed top-0 left-0 w-1/3 h-full bg-cover bg-center blur-lg"
         style={{ backgroundImage: 'url(/images/blurred-left.jpg)' }}

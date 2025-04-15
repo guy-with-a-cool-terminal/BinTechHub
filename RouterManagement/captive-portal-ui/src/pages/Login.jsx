@@ -49,7 +49,7 @@ export default function Login() {
             </div>
             <div className="text-right mt-1">
               <a href="#" className="text-sm text-blue-500 hover:underline">
-                Forget your password?
+                Forgot password?
               </a>
             </div>
           </div>
