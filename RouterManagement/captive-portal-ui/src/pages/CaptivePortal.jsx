@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-// Removing the import for PlanCard
 import PaymentModal from "../components/PaymentModal";
 
 const plansData = [
@@ -20,56 +19,57 @@ const CaptivePortal = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
-      <header className="py-6 px-4 flex items-center justify-between max-w-6xl mx-auto">
-        <div className="text-xl font-bold text-blue-500">ConnectWiFi</div>
-        <nav className="space-x-4">
-          <a href="#" className="text-gray-700 dark:text-gray-300 hover:text-blue-500">Payment Plans</a>
-          <a href="#" className="text-gray-700 dark:text-gray-300 hover:text-blue-500">Support</a>
-          <a href="#" className="text-gray-700 dark:text-gray-300 hover:text-blue-500">Terms</a>
+    <div className="min-h-screen bg-gray-50">
+      <header className="sticky top-0 py-4 px-4 flex items-center justify-between max-w-7xl mx-auto z-10 bg-white">
+        <div className="text-xl font-bold text-blue-500">PortalConnect</div>
+        <nav className="space-x-8">
+          <a href="#" className="text-gray-600 hover:text-blue-500 transition duration-200">Payment Plans</a>
+          <a href="#" className="text-gray-600 hover:text-blue-500 transition duration-200">Support</a>
+          <a href="#" className="text-gray-600 hover:text-blue-500 transition duration-200">Terms</a>
         </nav>
       </header>
 
-      <div className="text-center py-12 max-w-3xl mx-auto">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Choose a plan below to get started.</h2>
-        <p className="text-lg text-gray-600 dark:text-gray-400">Payment is quick and secure.</p>
-      </div>
+      <main className="max-w-7xl mx-auto py-8 lg:py-12 px-4 lg:px-8">
+        <div className="text-center mb-8 lg:mb-12">
+          <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight mb-3">
+            Choose a plan below to get started.
+          </h1>
+          <p className="text-lg text-gray-500">
+            Payment is quick and secure.
+          </p>
+        </div>
 
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
-        {plansData.map((plan, index) => (
-          <div
-            key={index}
-            className={`bg-white rounded-lg shadow-md p-6 flex flex-col cursor-pointer hover:shadow-lg transition duration-200 ${plan.isPopular ? 'border-2 border-blue-500' : ''}`}
-            onClick={() => handleSelect(plan)}
-          >
-            {/* {plan.isPopular && (
-              <div className="absolute top-2 right-2 bg-blue-500 text-white text-xs font-semibold rounded-full px-2 py-1">
-                Popular
-              </div>
-            )} */}
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">{plan.label}</h3>
-            <div className="flex items-baseline mb-4">
-              <span className="text-3xl font-bold text-gray-900">${plan.price}</span>
-              <span className="ml-1 text-gray-500">{plan.duration}</span>
-            </div>
-            <ul className="space-y-2 mb-4">
-              {plan.features.map((feature, i) => (
-                <li key={i} className="flex items-center text-gray-700">
-                  <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline"
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+          {plansData.map((plan, index) => (
+            <div
+              key={index}
+              className={`bg-white rounded-xl shadow-md p-6 lg:p-8 flex flex-col cursor-pointer transition duration-200 transform hover:translate-y-1 hover:shadow-lg`}
+              onClick={() => handleSelect(plan)}
             >
-              Select Plan
-            </button>
-          </div>
-        ))}
-      </div>
+              <h3 className="text-xl font-semibold text-blue-500 mb-3">{plan.label}</h3>
+              <div className="flex items-baseline mb-4">
+                <span className="text-3xl font-bold text-gray-900">${plan.price}</span>
+                <span className="ml-1 text-gray-500 text-sm">{plan.duration}</span>
+              </div>
+              <ul className="space-y-3 mb-5">
+                {plan.features.map((feature, i) => (
+                  <li key={i} className="flex items-center text-gray-700">
+                    <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <button
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-full focus:outline-none focus:shadow-outline transition duration-200"
+              >
+                Select Plan
+              </button>
+            </div>
+          ))}
+        </div>
+      </main>
 
       {selectedPlan && (
         <PaymentModal plan={selectedPlan} onClose={handleCloseModal} />
