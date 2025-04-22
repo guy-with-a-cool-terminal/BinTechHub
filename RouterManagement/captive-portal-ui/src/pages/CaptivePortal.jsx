@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import PaymentModal from "../components/PaymentModal";
 
 const plansData = [
-  { label: "Basic Plan", price: 10, duration: "/year/month", features: ["Basic Feature 1", "Basic Feature 2"], isPopular: false },
-  { label: "Pro Plan", price: 30, duration: "/year/month", features: ["Pro Feature 1", "Pro Feature 2"], isPopular: true },
-  { label: "Enterprise Plan", price: 100, duration: "/year/month", features: ["Enterprise Feature 1", "Enterprise Feature 2"], isPopular: false },
+  { label: "Basic Plan", price: 10, duration: "/Hour", features: ["Unlimited internet access for one hour", "Package fixed to one device only"], isPopular: false },
+  { label: "Pro Plan", price: 50, duration: "/Day", features: ["Unlimited internet access for one day", "Package limited to two devices"], isPopular: true },
+  { label: "Enterprise Plan", price: 900, duration: "/Month", features: ["Unlimited internet access for a month", "Unlimited Package sharing"], isPopular: false },
 ];
 
 const CaptivePortal = () => {
@@ -23,7 +23,7 @@ const CaptivePortal = () => {
       <header className="sticky top-0 py-4 px-4 flex items-center justify-between max-w-7xl mx-auto z-10 bg-white">
         <div className="text-xl font-bold text-blue-500">PortalConnect</div>
         <nav className="space-x-8">
-          <a href="#" className="text-gray-600 hover:text-blue-500 transition duration-200">Payment Plans</a>
+          <a href="/" className="text-gray-600 hover:text-blue-500 transition duration-200">Payment Plans</a>
           <a href="#" className="text-gray-600 hover:text-blue-500 transition duration-200">Support</a>
           <a href="#" className="text-gray-600 hover:text-blue-500 transition duration-200">Terms</a>
         </nav>
@@ -48,7 +48,7 @@ const CaptivePortal = () => {
             >
               <h3 className="text-xl font-semibold text-blue-500 mb-3">{plan.label}</h3>
               <div className="flex items-baseline mb-4">
-                <span className="text-3xl font-bold text-gray-900">${plan.price}</span>
+                <span className="text-3xl font-bold text-gray-900">Ksh.{plan.price}</span>
                 <span className="ml-1 text-gray-500 text-sm">{plan.duration}</span>
               </div>
               <ul className="space-y-3 mb-5">
