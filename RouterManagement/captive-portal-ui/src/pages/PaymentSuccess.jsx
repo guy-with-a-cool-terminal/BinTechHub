@@ -1,7 +1,13 @@
 import { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 
 export default function PaymentSuccess() {
   const [showCredits, setShowCredits] = useState(false);
+  const navigate = useNavigate()
+
+  const handleSwitchToPayments = () =>{
+    navigate('/');
+}
 
   return (
     <div className="min-h-screen bg-white text-gray-800">
@@ -10,7 +16,7 @@ export default function PaymentSuccess() {
       <header className="sticky top-0 z-50 bg-white w-full flex items-center justify-between px-6 py-4 border-b shadow-sm">
   <div className="text-xl font-semibold text-gray-800">PortalConnect</div>
   <div className="flex gap-4">
-        <button
+        <button onClick={handleSwitchToPayments}
           aria-label="Buy more internet access"
           className="bg-purple-500 hover:bg-purple-600 text-white font-medium px-6 py-3 rounded text-base"
         >
@@ -86,7 +92,7 @@ export default function PaymentSuccess() {
             <div className="flex flex-col md:flex-row justify-center items-center gap-6 text-blue-600 underline text-base">
               {/* TODO: Link to appropriate pages/routes */}
               <a href="#">Check My Access Status</a>
-              <a href="#">Top Up My Access</a>
+              <a href="/">Top Up My Access</a>
               <a href="#">Talk to Support</a>
             </div>
           </div>

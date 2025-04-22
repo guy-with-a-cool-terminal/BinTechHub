@@ -62,7 +62,7 @@ export default function Login() {
         </form>
         <p className="mt-6 text-sm text-gray-600">
           Need to create an account?{" "}
-          <a href="#" onClick={handleSwitchToSignup} className="text-blue-500 hover:underline">
+          <a href="signup" onClick={handleSwitchToSignup} className="text-blue-500 hover:underline">
             Sign Up
           </a>
         </p>
