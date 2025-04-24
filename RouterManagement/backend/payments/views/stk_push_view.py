@@ -3,10 +3,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from daraja.mpesa.core import MpesaClient
+from django_daraja.mpesa.core import MpesaClient
 import json
 import logging
-from .models import Payment
+from payments.models import Payment
+from payments.mpesa_integration.auth import generate_oauth_token
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +21,17 @@ class STKPushAPIView(APIView):
                 "error": "Phone number and amount are required."
             }, status=status.HTTP_400_BAD_REQUEST)
         
+        # generate Oauth token
+        try:
+            token = generate_oauth_token()
+        except Exception as e:
+            return Response({
+                "error": f"Error generating token: {str(e)}"
+            },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
         # initialize mpesa client
         cl = MpesaClient()
-        callback_url = "https://yourdomain.com/api/mpesa/callback/"  # replace this with your real callback URL
+        callback_url = "https://a13d-102-219-208-154.ngrok-free.app/api/payments/mpesa/callback/"
         
         try:
             # call stk_push
@@ -33,6 +42,7 @@ class STKPushAPIView(APIView):
                 callback_url,
                 "Captive portal access"
             )
+            logger.info("STK Push Response: %s", response)  # Log response
             return Response(response,status=status.HTTP_200_OK)
         except Exception as e:
             return Response({
@@ -68,7 +78,7 @@ def mpesa_callback(request):
                 transaction_date=transaction_date,
                 status='Success' if result_code == 0 else 'Failed',
                 transaction_type='STK Push',
-                reference='CaptivePortal' # i might ref something else
+                reference='pay for your drugs' # i might ref something else
             )
             logger.info("Payment successfully saved: %s",payment)
             return JsonResponse({"message": "Callback received successfully"}, status=200)

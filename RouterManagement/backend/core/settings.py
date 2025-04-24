@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-atiz1x-8depc389=j#q*9054szb(*s)p=hgrgi%r^irc&ed9+2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -39,9 +39,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'payments',
+    'django_daraja',
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -119,11 +122,14 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 # MPesa credentials
-MPESA_CONSUMER_KEY = "your_consumer_key_here"
-MPESA_CONSUMER_SECRET = "your_consumer_secret_here"
-MPESA_SHORTCODE = "your_shortcode_here"  # MPesa shortcode (used for STK Push)
-MPESA_LIPA_NA_MPESA_SHORTCODE = "your_lipa_na_mpesa_shortcode"
-MPESA_LIPA_NA_MPESA_SHORTCODE_SHORTCODE = "your_shortcode"
+MPESA_CONSUMER_KEY = ""
+MPESA_CONSUMER_SECRET = ""
+MPESA_EXPRESS_SHORTCODE = "174379"  # Correct shortcode for STK Push (sandbox or production)
+MPESA_ENVIRONMENT = "sandbox"  # or "production" when going live
+MPESA_PASSKEY = ""  # Sandbox passkey (for STK Push)
+
+CORS_ALLOW_ALL_ORIGINS = True  # ⚠️ only for development!
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

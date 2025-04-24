@@ -1,84 +1,40 @@
-# stk_views.py
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-from daraja.mpesa.core import MpesaClient
-import json
+import base64
+import requests
 import logging
-from .models import Payment
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-class STKPushAPIView(APIView):
-    def post(self, request):
-        phone_number = request.data.get("phone_number")
-        amount = request.data.get("amount")
+def generate_oauth_token():
+    # Mpesa API endpoint for token generation
+    url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+    
+    # Combine the consumer key and secret key
+    auth = base64.b64encode(f"{settings.MPESA_CONSUMER_KEY}:{settings.MPESA_CONSUMER_SECRET}".encode("utf-8")).decode("utf-8")
+    
+    headers = {
+        "Authorization": f"Basic {auth}",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+    
+    try:
+        # Make the request to the MPesa API
+        response = requests.get(url, headers=headers)
         
-        if not phone_number or not amount:
-            return Response({
-                "error": "Phone number and amount are required."
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Initialize mpesa client
-        cl = MpesaClient()
-        callback_url = "https://yourdomain.com/api/mpesa/callback/"  # replace this with your real callback URL
-        
-        try:
-            # Call stk_push
-            response = cl.stk_push(
-                phone_number,
-                amount,
-                "CaptivePortal",  # account ref
-                callback_url,
-                "Captive portal access"
-            )
-            return Response(response, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({
-                "error": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-# Callback view to handle MPESA responses
-@csrf_exempt
-def mpesa_callback(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            logger.info("MPESA Callback received: %s", data)
-
-            # Extracting relevant data from MPESA callback
-            stk_callback = data.get('Body', {}).get('stkCallback', {})
-
-            result_code = stk_callback.get('ResultCode')
-            result_desc = stk_callback.get('ResultDesc')
-            metadata = stk_callback.get('CallbackMetadata', {})
-            
-            # Collecting transaction details
-            transaction_date = stk_callback.get('TransactionDate')
-            mpesa_receipt = stk_callback.get('MpesaReceiptNumber')
-            phone_number = stk_callback.get('PhoneNumber')
-            amount = metadata.get('Item', [{}])[0].get('Value')
-
-            # Saving payment data to the database
-            payment = Payment.objects.create(
-                phone_number=phone_number,
-                amount=amount,
-                mpesa_receipt=mpesa_receipt,
-                transaction_date=transaction_date,
-                status='Success' if result_code == 0 else 'Failed',
-                transaction_type='STK Push',
-                reference='CaptivePortal'  # Or you could reference something else
-            )
-
-            logger.info("Payment successfully saved: %s", payment)
-
-            return JsonResponse({"message": "Callback received successfully"}, status=200)
-
-        except Exception as e:
-            logger.error("Error in MPESA callback: %s", str(e))
-            return JsonResponse({"error": "Invalid data"}, status=400)
-
-    return JsonResponse({"error": "Invalid request method"}, status=405)
+        # Check if the request was successful
+        if response.status_code == 200:
+            # Extract the access token from the response
+            token = response.json().get("access_token")
+            if not token:
+                logger.error("Token generation failed: No token found in response")
+                raise Exception("Token generation failed: No token in response")
+            logger.info("MPESA OAuth Token generated successfully.")
+            return token
+        else:
+            logger.error(f"Error generating OAuth token. Status code: {response.status_code}, Response: {response.text}")
+            raise Exception(f"Error generating OAuth token: {response.text}")
+    
+    except requests.exceptions.RequestException as e:
+        # Catch any exceptions from the HTTP request
+        logger.error(f"Error during request to generate OAuth token: {str(e)}")
+        raise Exception(f"Error during request: {str(e)}")
