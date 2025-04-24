@@ -8,6 +8,7 @@ import NotFound from './pages/NotFound';
 import './index.css';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp'
+import Users from './pages/admin/Users'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -18,6 +19,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="success" element={<PaymentSuccess />} />
           <Route path="login" element={<Login />} />
           <Route path="signUp" element={<SignUp />} />
+          <Route path="users" element={<Users />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
