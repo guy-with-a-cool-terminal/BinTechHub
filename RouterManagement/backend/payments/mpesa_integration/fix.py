@@ -1,43 +1,41 @@
-import base64
-import requests
-from decouple import config  # Import config to load from .env
-import logging
-
-logger = logging.getLogger(__name__)
-
-# generate auth token for the mpesa API
-def generate_oauth_token():
-    # mpesa API endpoint
-    url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-    
-    # Fetch consumer key and secret from .env
-    consumer_key = config("MPESA_CONSUMER_KEY")
-    consumer_secret = config("MPESA_CONSUMER_SECRET")
-
-    # combine consumer key and secret key
-    auth = base64.b64encode(f"{consumer_key}:{consumer_secret}".encode("utf-8")).decode("utf-8")
-    headers = {
-        "Authorization": f"Basic {auth}",
-        "Content-Type": "application/x-www-form-urlencoded",
-    }
-    
-    try:
-        # make the request
-        response = requests.get(url, headers=headers)
+class STKPushAPIView(APIView):
+    def post(self, request):
+        phone_number = request.data.get("phone_number")
+        amount = request.data.get("amount")
         
-        # confirm if it was successful
-        if response.status_code == 200:
-            # extract access token from response
-            token = response.json().get("access_token")
-            if not token:
-                logger.error("Token generation failed: No token found in response")
-                raise Exception("Token generation failed: No token in response")
-            logger.info("MPESA OAuth Token generated successfully.")
-            return token
-        else:
-            logger.error(f"Error generating OAuth token. Status code: {response.status_code}, Response: {response.text}")
-            raise Exception(f"Error generating oauth token: {response.text}")
-    
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Error during request to generate OAuth token: {str(e)}")
-        raise Exception(f"Error during request: {str(e)}")
+        if not phone_number or not amount:
+            return Response({
+                "error": "Phone number and amount are required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Enforce correct phone number format
+        if not phone_number.startswith("254") or len(phone_number) != 12:
+            return Response({
+                "error": "Phone number must be in format 2547XXXXXXXX"
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Initialize mpesa client and fetch callback URL from config
+            cl = MpesaClient()
+            callback_url = config("MPESA_CALLBACK_URL")  # Should pull from .env
+            
+            # Debugging print and log to confirm callback URL
+            logger.debug("MPESA_CALLBACK_URL: %s", callback_url)
+            print(f"MPESA_CALLBACK_URL: {callback_url}")
+
+            # Make the STK Push request (correct parameter order)
+            response = cl.stk_push(
+                phone_number,
+                amount,
+                "CaptivePortal",  # Account reference
+                "Captive portal access",  # Transaction description
+                callback_url  # Callback URL
+            )
+            logger.info("STK Push Response: %s", response)  # Log response
+
+            return Response(response, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

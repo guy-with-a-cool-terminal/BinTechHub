@@ -8,7 +8,6 @@ from django_daraja.mpesa.core import MpesaClient
 import json
 import logging
 from payments.models import Payment
-from payments.mpesa_integration.auth import generate_oauth_token
 
 logger = logging.getLogger(__name__)
 
@@ -21,27 +20,32 @@ class STKPushAPIView(APIView):
             return Response({
                 "error": "Phone number and amount are required."
             }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # generate Oauth token
-        try:
-            token = generate_oauth_token()
-        except Exception as e:
+            
+        if not phone_number.startswith("254") or len(phone_number) !=12:
             return Response({
-                "error": f"Error generating token: {str(e)}"
-            },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        # initialize mpesa client
-        cl = MpesaClient()
-        callback_url = config("MPESA_CALLBACK_URL")
+                "error": "Phone number must be in format 2547XXXXXXXX"
+            },status=status.HTTP_400_BAD_REQUEST)
         
         try:
+            # load credentials from .env
+            mpesa_consumer_key = config("MPESA_CONSUMER_KEY")
+            mpesa_consumer_secret = config("MPESA_CONSUMER_SECRET")
+            logger.debug("MPESA_CONSUMER_KEY: %s", mpesa_consumer_key)
+            
+            # initialize mpesa client
+            cl = MpesaClient()
+            callback_url = config("MPESA_CALLBACK_URL")
+            
+            logger.debug("MPESA_CALLBACK_URL: %s", callback_url)
+            print(f"MPESA_CALLBACK_URL: {callback_url}")
+        
             # call stk_push
             response = cl.stk_push(
                 phone_number,
                 amount,
                 "CaptivePortal", #account ref
-                callback_url,
-                "Captive portal access"
+                "Captive portal access",
+                callback_url
             )
             logger.info("STK Push Response: %s", response)  # Log response
             return Response(response,status=status.HTTP_200_OK)
@@ -59,17 +63,24 @@ def mpesa_callback(request):
             logger.info("MPESA Callback received: %s", data)
             
             # extract relevant data from mpesa callback
-            stk_callback = data.get('Body',{}).get('stkCallback',{})
+            stk_callback = data.get('Body', {}).get('stkCallback', {})
             
             result_code = stk_callback.get('ResultCode')
             result_desc = stk_callback.get('ResultDesc')
             metadata = stk_callback.get('CallbackMetadata',{})
+            items = metadata.get('Item', [])
             
-            # collecting transaction details
-            transaction_date = stk_callback.get('TransactionDate')
-            mpesa_receipt = stk_callback.get('MpesaReceiptNumber')
-            phone_number = stk_callback.get('PhoneNumber') 
-            amount = metadata.get('Item', [{}])[0].get('Value')
+            # helper function to extract item values by name
+            def get_value(name):
+                for item in items:
+                    if item['Name'] == name:
+                        return item.get('Value')
+                return None
+            
+            amount = get_value('Amount')
+            mpesa_receipt = get_value('MpesaReceiptNumber')
+            phone_number = get_value('PhoneNumber')
+            transaction_date = get_value('TransactionDate')
             
             # save payment data to database
             payment = Payment.objects.create(
@@ -79,7 +90,7 @@ def mpesa_callback(request):
                 transaction_date=transaction_date,
                 status='Success' if result_code == 0 else 'Failed',
                 transaction_type='STK Push',
-                reference='pay for your drugs' # i might ref something else
+                reference='captive portal' # i might ref something else
             )
             logger.info("Payment successfully saved: %s",payment)
             return JsonResponse({"message": "Callback received successfully"}, status=200)
