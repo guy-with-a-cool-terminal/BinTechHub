@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from decouple import config
 from django_daraja.mpesa.core import MpesaClient
 import json
 import logging
@@ -31,7 +32,7 @@ class STKPushAPIView(APIView):
         
         # initialize mpesa client
         cl = MpesaClient()
-        callback_url = "https://a13d-102-219-208-154.ngrok-free.app/api/payments/mpesa/callback/"
+        callback_url = config("MPESA_CALLBACK_URL")
         
         try:
             # call stk_push

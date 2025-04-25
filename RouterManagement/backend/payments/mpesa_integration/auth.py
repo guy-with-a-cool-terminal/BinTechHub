@@ -1,6 +1,6 @@
 import base64
 import requests
-from django.conf import settings
+from decouple import config
 from datetime import datetime
 import logging
 
@@ -8,11 +8,14 @@ logger = logging.getLogger(__name__)
 
 # generate auth token for the mpesa API
 def generate_oauth_token():
-    # mpesa API endpoint
-    url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+    
+    # mpesa API endpoint and keys from .env
+    url = config("MPESA_API_URL")
+    consumer_key = config("MPESA_CONSUMER_KEY")
+    consumer_secret = config("MPESA_CONSUMER_SECRET")
     
     # combine consumer key and secret key
-    auth = base64.b64encode(f"{settings.MPESA_CONSUMER_KEY}:{settings.MPESA_CONSUMER_SECRET}".encode("utf-8")).decode("utf-8")
+    auth = base64.b64encode(f"{consumer_key}:{consumer_secret}".encode("utf-8")).decode("utf-8")
     headers ={
         "Authorization": f"Basic {auth}",
         "Content-Type": "application/x-www-form-urlencoded",
