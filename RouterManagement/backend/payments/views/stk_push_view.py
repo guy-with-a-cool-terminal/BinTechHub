@@ -30,15 +30,11 @@ class STKPushAPIView(APIView):
             # load credentials from .env
             mpesa_consumer_key = config("MPESA_CONSUMER_KEY")
             mpesa_consumer_secret = config("MPESA_CONSUMER_SECRET")
-            logger.debug("MPESA_CONSUMER_KEY: %s", mpesa_consumer_key)
             
             # initialize mpesa client
             cl = MpesaClient()
             callback_url = config("MPESA_CALLBACK_URL")
             
-            logger.debug("MPESA_CALLBACK_URL: %s", callback_url)
-            print(f"MPESA_CALLBACK_URL: {callback_url}")
-        
             # call stk_push
             response = cl.stk_push(
                 phone_number,
