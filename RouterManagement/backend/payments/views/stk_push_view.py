@@ -7,7 +7,7 @@ from decouple import config
 from django_daraja.mpesa.core import MpesaClient
 import json
 import logging
-from payments.models import Payment
+from payments.models import Payment,User
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +60,6 @@ def mpesa_callback(request):
             
             # extract relevant data from mpesa callback
             stk_callback = data.get('Body', {}).get('stkCallback', {})
-            
             result_code = stk_callback.get('ResultCode')
             result_desc = stk_callback.get('ResultDesc')
             metadata = stk_callback.get('CallbackMetadata',{})
@@ -78,6 +77,26 @@ def mpesa_callback(request):
             phone_number = get_value('PhoneNumber')
             transaction_date = get_value('TransactionDate')
             
+            # check if all necessary data is available
+            if not amount or not phone_number or not mpesa_receipt or not transaction_date:
+                return JsonResponse({"error": "Missing required data"}, status=400)
+            
+            # initialize mpesaclient for payment verification
+            mpesa_client = MpesaClient()
+            payment_status = mpesa_client.payment_status(mpesa_receipt)
+            
+            # ensure the user can't tamper with the amount
+            if payment_status['ResultCode'] == 0:
+                actual_amount = payment_status['CallbackMetadata']['Item'][0]['Value']
+                if actual_amount !=float(amount):
+                    return JsonResponse({"error": "Amount mismatch. Payment is invalid."}, status=400)
+            else:
+                return JsonResponse({"error": "Failed to verify payment with M-Pesa."}, status=400)
+                
+            # link payments to the user,create one if doesn't exist
+            user,created = User.objects.get_or_create(phone_number=phone_number)
+            access_duration = calculate_access_time(actual_amount)
+            
             # save payment data to database
             payment = Payment.objects.create(
                 phone_number=phone_number,
@@ -86,7 +105,9 @@ def mpesa_callback(request):
                 transaction_date=transaction_date,
                 status='Success' if result_code == 0 else 'Failed',
                 transaction_type='STK Push',
-                reference='captive portal' # i might ref something else
+                reference='captive portal', # i might ref something else
+                access_duration_minutes=access_duration,
+                start_time=transaction_date
             )
             logger.info("Payment successfully saved: %s",payment)
             return JsonResponse({"message": "Callback received successfully"}, status=200)
@@ -95,3 +116,14 @@ def mpesa_callback(request):
             logger.error("Error in MPESA callback: %s", str(e))
             return JsonResponse({"error": "Invalid data"}, status=400)
     return JsonResponse({"error": "Invalid request method"}, status=405)
+
+def calculate_access_time(amount):
+    '''return 30 == 30 minutes'''
+    if amount >= 10:
+        return 30
+    elif amount >= 20:
+        return 60
+    elif amount >= 50:
+        return 120
+    else:
+        return 15
