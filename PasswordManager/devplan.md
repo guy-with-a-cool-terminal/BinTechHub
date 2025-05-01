@@ -1,4 +1,3 @@
-Certainly! Here's a breakdown of the **frontend vs. backend responsibilities** for the password manager, including the **GitHub scanning feature**.
 
 ### **Frontend Plan:**
 
