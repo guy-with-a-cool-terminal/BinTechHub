@@ -6,7 +6,6 @@ import React, { useState } from 'react'; // Import useState
 export default function SignUpForm() {
   const navigate = useNavigate()
 
-  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -55,16 +54,6 @@ const handleSignUp = async (event) => {
         )}
         <form className="space-y-4" onSubmit={handleSignUp}>
           <div>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <UserIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-              </div>
-              <input
-                type="text"
-                placeholder="Full Name"
-                className="w-full pl-10 pr-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
           </div>
           <div>
             <div className="relative">
@@ -73,6 +62,8 @@ const handleSignUp = async (event) => {
               </div>
               <input
                 type="email"
+                value={email}
+                onChange={(e)=>setEmail(e.target.value)}
                 placeholder="Your Email address"
                 className="w-full pl-10 pr-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -85,6 +76,8 @@ const handleSignUp = async (event) => {
               </div>
               <input
                 type="password"
+                value={password}
+                onChange={(e)=>setPassword(e.target.value)}
                 placeholder="Enter your password"
                 className="w-full pl-10 pr-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -97,6 +90,8 @@ const handleSignUp = async (event) => {
               </div>
               <input
                 type="password"
+                value={confirmPassword}
+                onChange={(e)=>setConfirmPassword(e.target.value)}
                 placeholder="Confirm your password"
                 className="w-full pl-10 pr-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />

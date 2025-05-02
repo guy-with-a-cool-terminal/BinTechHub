@@ -29,7 +29,6 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response && error.response.status === 401) {
       const refreshToken = localStorage.getItem('refresh_token');
-    //   if no refresh token force logout
       if (!refreshToken) {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
@@ -39,10 +38,8 @@ api.interceptors.response.use(
 
       try {
         const response = await api.post('/token/refresh/', { refresh: refreshToken });
-        const { access, refresh } = response.data;
-
+        const access = response.data.access;
         localStorage.setItem('access_token', access);
-        localStorage.setItem('refresh_token', refresh);
 
         error.config.headers['Authorization'] = `Bearer ${access}`;
         return api(error.config);
@@ -59,27 +56,32 @@ api.interceptors.response.use(
   }
 );
 
-// Sign-up
+// Sign-up (Registration)
 const signUp = async (email, password) => {
   try {
-    const response = await api.post('/signup/', { email, password });
-    const { access_token, refresh_token } = response.data;
-    localStorage.setItem('access_token', access_token);
-    localStorage.setItem('refresh_token', refresh_token);
-    return response.data;
+    if (email && password) {
+      const response = await api.post('/signup/', { email, password });
+      return response.data;
+    } else {
+      alert("Email and password are required.");
+    }
   } catch (error) {
     handleApiError(error);
     throw new Error('Sign-up failed');
   }
 };
 
+
 // Login
 const login = async (email, password) => {
   try {
     const response = await api.post('/login/', { email, password });
     const { access_token, refresh_token } = response.data;
+
+    // Store tokens in localStorage
     localStorage.setItem('access_token', access_token);
     localStorage.setItem('refresh_token', refresh_token);
+
     return response.data;
   } catch (error) {
     handleApiError(error);

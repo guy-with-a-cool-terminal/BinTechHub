@@ -1,13 +1,18 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserRegistrationSerializer, UserLoginSerializer
-from rest_framework_simplejwt.views import TokenRefreshView
+from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 # user registration
 class UserRegistrationView(APIView):
+    permission_classes = [AllowAny] 
     def post(self,request):
+        print(request.data)
         # deserialize request data
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -19,23 +24,21 @@ class UserRegistrationView(APIView):
 
 # user login
 class UserLoginView(APIView):
-    def post(self,request):
+    permission_classes = [AllowAny] 
+    def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid():
-            # if login is a success we generate a jwt..jawt whatever token
-            try:
-                user = User.objects.get(email=request.data['email'])
-            except User.DoesNotExist:
-                return Response({"detail": "Invalid email or password."}, status=status.HTTP_400_BAD_REQUEST)
+            email = request.data.get('email')
+            password = request.data.get('password')
+            user = authenticate(email=email, password=password)
+            if user is None:
+                return Response(
+                    {"detail": "Invalid email or password."},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
             refresh = RefreshToken.for_user(user)
-            access_token = str(refresh.access_token)
-            refresh_token = str(refresh)
-            
-            # Return the access token and refresh token
             return Response({
-                "access_token": access_token,
-                "refresh_token": refresh_token
+                "access_token": str(refresh.access_token),
+                "refresh_token": str(refresh)
             }, status=status.HTTP_200_OK)
-            
-        # If login is invalid, return an error
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

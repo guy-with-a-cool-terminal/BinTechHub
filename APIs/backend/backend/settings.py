@@ -106,18 +106,19 @@ USE_TZ = True
 
 # Simple JWT settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # token lifetime
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),  # refresh token lifetime
-    'ALGORITHM': 'HS256',  # algorithm to encode JWT
-    'SIGNING_KEY': 'dc4dbd565926b80f7dc6a3e5b67f0b1a9894f275b145534a712ab0ba0ceb51d3',  # change this to your secret key
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,  # ✅ Use Django's SECRET_KEY
 }
+
 # Django REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',  # JWT Authentication class
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',  # Require authentication for all views by default
+        'rest_framework.permissions.IsAuthenticated',  # ✅ secure defaults
     ],
 }
 
@@ -136,3 +137,4 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+AUTH_USER_MODEL = 'password_manager.CustomUser'
