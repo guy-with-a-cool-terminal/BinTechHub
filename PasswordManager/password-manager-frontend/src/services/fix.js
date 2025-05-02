@@ -1,22 +1,24 @@
 import { EnvelopeIcon, LockClosedIcon, UserIcon } from '@heroicons/react/20/solid'; // Import icons
 import { useNavigate } from 'react-router-dom'; // import navigate
-import api from '../services/api';
-import React, { useState } from 'react'; // Import useState
+import { useState } from 'react'; // Import useState
+import api from '../services/api'; // Import the API service
 
 export default function SignUpForm() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
+  // State for form inputs
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState(''); // Error state
 
-  const handleSwitchToLogin = () =>{
+  const handleSwitchToLogin = () => {
     navigate('/login');
- }
+  };
 
-const handleSignUp = async (event) => {
+  // Handle form submission
+  const handleSignUp = async (event) => {
     event.preventDefault(); // Prevent default form submission
 
     // Check if passwords match
@@ -37,7 +39,7 @@ const handleSignUp = async (event) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      {}
+      {/* Blurred Background Images */}
       <div
         className="fixed top-0 left-0 w-1/3 h-full bg-cover bg-center blur-lg"
         style={{ backgroundImage: 'url(/images/blurred-left.jpg)' }}
@@ -62,6 +64,8 @@ const handleSignUp = async (event) => {
               <input
                 type="text"
                 placeholder="Full Name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -74,6 +78,8 @@ const handleSignUp = async (event) => {
               <input
                 type="email"
                 placeholder="Your Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -86,6 +92,8 @@ const handleSignUp = async (event) => {
               <input
                 type="password"
                 placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -98,6 +106,8 @@ const handleSignUp = async (event) => {
               <input
                 type="password"
                 placeholder="Confirm your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -111,7 +121,11 @@ const handleSignUp = async (event) => {
         </form>
         <p className="mt-6 text-sm text-gray-600">
           Already have an account?{" "}
-          <a href="#" onClick={handleSwitchToLogin} className="text-blue-500 hover:underline">
+          <a
+            href="#"
+            onClick={handleSwitchToLogin}
+            className="text-blue-500 hover:underline"
+          >
             Log In
           </a>
         </p>

@@ -1,11 +1,29 @@
 import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/20/solid'; // Import icons
 import { useNavigate } from 'react-router-dom'; // import navigate
+import api from '../services/api';
+import { useState } from 'react';
 
 export default function Login() {
   const navigate = useNavigate()
 
+  // state for form inputs
+  const [email,setEmail] = useState('');
+  const [password,setPassword] = useState('');
+  const [error,setError] = useState('');
+
   const handleSwitchToSignup = () =>{
     navigate('/signup');
+}
+
+// handle form submission
+const handleLogin = async (event) => {
+  event.preventDefault();
+  try {
+    await api.login(email, password);
+    navigate('/dashboard');
+  } catch (error) {
+    setError('Login failed. Please check your credentials and try again.');
+  }
 }
 
   return (
@@ -22,8 +40,11 @@ export default function Login() {
 
       <div className="relative bg-white p-8 rounded-xl shadow-md w-full max-w-md text-center z-10">
         <h2 className="text-2xl font-semibold text-gray-800 mb-2">Access Account</h2>
-        <p className="text-sm text-gray-600 mb-6">Log in to access the network</p>
-        <form className="space-y-4">
+        <p className="text-sm text-gray-600 mb-6">Log in to access your Vault</p>
+        {error && (
+          <div className="mb-4 text-red-500">{error}</div> // Display error if login fails
+        )}
+        <form className="space-y-4" onSubmit={handleLogin}>
           <div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
