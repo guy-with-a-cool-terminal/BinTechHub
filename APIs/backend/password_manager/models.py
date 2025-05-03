@@ -1,8 +1,10 @@
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
+from django.conf import settings
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.utils import timezone
-import bcrypt
-
+from cryptography.fernet import Fernet
+import base64
+import hashlib
 
 # Custom User Manager to handle user creation
 class CustomUserManager(BaseUserManager):
@@ -40,3 +42,39 @@ class CustomUser(AbstractBaseUser):
 
     def __str__(self):
         return self.email
+    
+'''Encryption and password management models'''
+
+# AES helper function
+def get_cipher():
+    # derive 32-byte key
+    key = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
+    fernet_key = base64.urlsafe_b64encode(key)
+    return Fernet(fernet_key)
+
+# PasswordEntry model for storing encrypted passwords
+class PasswordEntry(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    website = models.URLField(blank=True)
+    username = models.CharField(max_length=255)
+    encrypted_password = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('user', 'title')
+        
+    def set_password(self,raw_password):
+        if len(raw_password) < 8:
+            raise ValueError("Password must be at least 8 characters long.")
+        cipher = get_cipher()
+        encrypted = cipher.encrypt(raw_password.encode())
+        self.encrypted_password = encrypted.decode()
+    
+    def get_password(self):
+        cipher = get_cipher()
+        return cipher.decrypt(self.encrypted_password.encode()).decode()
+    
+    def __str__(self):
+        return f"{self.title} ({self.username})"

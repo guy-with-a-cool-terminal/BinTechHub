@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import Header from '../components/Header';
+import api from "../services/api";
 
 const AddPassword = () => {
+  const [title, setTitle] = useState("");
+  const [website, setWebsite] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [strength, setStrength] = useState(0);
 
@@ -37,6 +41,33 @@ const AddPassword = () => {
     setStrength(getPasswordStrength(newPass));
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!title || !website || !username || !password) {
+      alert("Please fill out all fields.");
+      return;
+    }
+    const passwordData = {
+      title,
+      website,
+      username,
+      password,
+    };
+    try {
+          const response = await api.createPassword(passwordData);
+          alert("Password saved successfully!");
+          console.log(response);
+          setTitle("");
+          setWebsite("");
+          setUsername("");
+          setPassword("");
+        } catch (error) {
+          alert("Failed to save the password.");
+          console.error(error);
+        }
+  };
+  
   const strengthBarClass = [
     "w-1/4 bg-red-500",
     "w-2/4 bg-yellow-500",
@@ -46,19 +77,20 @@ const AddPassword = () => {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Reusable Header Component */}
       <Header />
 
       <div className="flex flex-col items-center justify-center px-4 py-8">
         <h1 className="text-3xl font-semibold mb-8 text-gray-800">Add New Password</h1>
         
-        <form className="w-full max-w-3xl bg-white p-8 rounded-lg shadow-lg">
+        <form onSubmit={handleSubmit} className="w-full max-w-3xl bg-white p-8 rounded-lg shadow-lg">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Title Input */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
               <input
                 type="text"
+                value={title}
+                onChange={(e)=> setTitle(e.target.value)}
                 placeholder="My New Password"
                 className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
@@ -69,6 +101,8 @@ const AddPassword = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Site</label>
               <input
                 type="text"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
                 placeholder="https://www.example.com"
                 className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
@@ -79,6 +113,8 @@ const AddPassword = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
               <input
                 type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 placeholder="myusername"
                 className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
