@@ -1,44 +1,21 @@
 import React from 'react';
 import {
-  Search, Bell, Settings, User, Eye, Pencil, Trash, ChevronDown
+  Search, Pencil, Trash, ChevronDown
 } from 'lucide-react';
+import Header from '../components/Header';
 
 const Dashboard = () => {
   const data = [];
 
   return (
-    <div className="bg-[#F3F2FA] min-h-screen text-sm">
-      {/* Header */}
-      <header className="bg-white px-6 py-4 flex justify-between items-center shadow-sm">
-        {/* Left Section: Logo & Nav */}
-        <div className="flex items-center space-x-8">
-          <div className="flex items-center space-x-2">
-            <img src="/logo.svg" alt="" className="w-6 h-6" />
-            {/* Removed the SecureVault name */}
-          </div>
-          <nav className="flex space-x-6">
-            <a href="#" className="text-indigo-600 font-medium border-b-2 border-indigo-600 pb-1">Dashboard</a>
-            <a href="#" className="text-gray-500 hover:text-indigo-500">Add/Edit Password</a>
-            <a href="#" className="text-gray-500 hover:text-indigo-500">GitHub Scan</a>
-          </nav>
-        </div>
-
-        {/* Right Icons */}
-        <div className="flex items-center space-x-5">
-          <Search className="w-5 h-5 text-gray-600 cursor-pointer" />
-          <Bell className="w-5 h-5 text-gray-600 cursor-pointer" />
-          <Settings className="w-5 h-5 text-gray-600 cursor-pointer" />
-          {/* Replaced avatar with user icon */}
-          <User className="w-6 h-6 text-gray-600 cursor-pointer" />
-        </div>
-      </header>
+    <div className="bg-white min-h-screen text-base font-inter">
+      <Header />
 
       {/* Main Section */}
-      <main className="p-8">
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          {/* Top Section */}
-          <div className="flex justify-between items-center mb-4">
-            <div className="relative w-64">
+      <main className="p-6 sm:p-8">
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mb-6 gap-4">
+            <div className="relative w-full sm:w-64">
               <input
                 type="text"
                 placeholder="Search..."
@@ -46,8 +23,8 @@ const Dashboard = () => {
               />
               <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
             </div>
-            <button className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-md text-sm">
-              Add Password
+            <button className="bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm sm:text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-indigo-400">
+              + Add Password
             </button>
           </div>
 
@@ -80,9 +57,15 @@ const Dashboard = () => {
                       <td className="px-4 py-3">username</td>
                       <td className="px-4 py-3">********</td>
                       <td className="px-4 py-3">2025-05-01</td>
-                      <td className="px-4 py-3 flex space-x-2">
-                        <Pencil className="w-4 h-4 text-blue-500 cursor-pointer" />
-                        <Trash className="w-4 h-4 text-red-500 cursor-pointer" />
+                      <td className="px-4 py-3">
+                        <div className="flex space-x-2">
+                          <button title="Edit" className="hover:bg-blue-100 rounded-full p-1.5 transition">
+                            <Pencil className="w-4 h-4 text-blue-500" />
+                          </button>
+                          <button title="Delete" className="hover:bg-red-100 rounded-full p-1.5 transition">
+                            <Trash className="w-4 h-4 text-red-500" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -97,7 +80,9 @@ const Dashboard = () => {
               <button
                 key={idx}
                 className={`w-8 h-8 rounded-full text-sm ${
-                  pg === 1 ? "bg-indigo-500 text-white" : "bg-white border border-gray-300 text-gray-600 hover:bg-gray-100"
+                  pg === 1
+                    ? "bg-indigo-500 text-white"
+                    : "bg-white border border-gray-300 text-gray-600 hover:bg-gray-100"
                 }`}
               >
                 {pg}
