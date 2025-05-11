@@ -103,7 +103,7 @@ const createPassword = async(passwordData) =>{
 // Get password List
 const getPasswords = async () => {
   try {
-    const response = await api.get('/passwords/');
+    const response = await api.get(`/passwords/?page=${page}`);
     return response.data;
   } catch (error) {
     handleApiError(error);

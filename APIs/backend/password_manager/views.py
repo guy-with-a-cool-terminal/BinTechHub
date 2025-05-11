@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 from .models import PasswordEntry
 from .serializers import PasswordEntrySerializer
 from .serializers import UserRegistrationSerializer, UserLoginSerializer
@@ -36,7 +37,7 @@ class UserLoginView(APIView):
             user = authenticate(email=email, password=password)
             if user is None:
                 return Response(
-                    {"detail": "Invalid email or password."},
+                    {"detail": "Invalid credentials."},
                     status=status.HTTP_401_UNAUTHORIZED
                 )
             refresh = RefreshToken.for_user(user)
@@ -47,6 +48,14 @@ class UserLoginView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 '''Password management views'''
+# Pagination class
+class PasswordEntryPagination(PageNumberPagination):
+    page_size = 10  # Number of items per page
+    page_size_query_param = 'page_size'  # Allow custom page size via query param
+    max_page_size = 100  # Maximum page size
+    # Optional: Customize page parameter if you want something like `page=1` instead of `page=1`
+    page_query_param = 'page'
+    
 # create new password entry
 class PasswordEntryCreateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -73,13 +82,20 @@ class PasswordEntryCreateView(APIView):
 # list all password entries for authenticated user
 class PasswordEntryListView(APIView):
     permission_classes = [IsAuthenticated]
+    pagination_class = PasswordEntryPagination
 
     def get(self, request):
         # Filter the passwords by the authenticated user
         password_entries = PasswordEntry.objects.filter(user=request.user)
+        paginator = PasswordEntryPagination()
+        result_page = paginator.paginate_queryset(password_entries, request)
+        if result_page is not None:
+            serializer = PasswordEntrySerializer(result_page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        # If no pagination is needed (e.g., for small datasets), return the full list
         serializer = PasswordEntrySerializer(password_entries, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
+    
 # retrieve a single password entry
 class PasswordEntryRetrieveView(APIView):
     permission_classes = [IsAuthenticated]
