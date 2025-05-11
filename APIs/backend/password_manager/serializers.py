@@ -35,19 +35,17 @@ class PasswordEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = PasswordEntry
         fields = ['id', 'user', 'title', 'website', 'username', 'encrypted_password','password','created_at', 'updated_at']
-        read_only_fields = ['user', 'created_at', 'updated_at']
-        
-        # Encrypt the password before saving
+        read_only_fields = ['user', 'created_at', 'updated_at','encrypted_password']
+         # Encrypt the password before saving
+         
     def create(self, validated_data):
         password = validated_data.pop('password')
-        
         # Encrypt the password before saving
         password_entry = PasswordEntry(**validated_data)
         password_entry.set_password(password)  # Use custom encryption method
         password_entry.save()
-        
         return password_entry
-
+    
     # Override the update method to handle re-encryption
     def update(self, instance, validated_data):
         password = validated_data.pop('password', None)
