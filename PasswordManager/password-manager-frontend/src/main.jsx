@@ -7,6 +7,7 @@ import Login from './pages/Login.jsx'
 import SignUpForm from './pages/Signup.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import AddPassword from './pages/AddPassword.jsx'
+import ScanGithub from './pages/ScanGithub.jsx'
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Router>
@@ -15,6 +16,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUpForm />} />
+        <Route path="/scan" element={<ScanGithub />} />
         <Route path="/addpassword" element={<AddPassword />} />
       </Routes>
     </Router>
