@@ -88,6 +88,58 @@ const login = async (email, password) => {
     throw new Error('Login failed');
   }
 };
+// Password management
+
+// create password entry
+const createPassword = async(passwordData) =>{
+  try {
+    const response = await api.post('/passwords/create/',passwordData);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw new Error('create password failed :(')
+  }
+}
+// Get password List
+const getPasswords = async () => {
+  try {
+    const response = await api.get(`/passwords/?page=${page}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw new Error('Get Password List failed');
+  }
+};
+// Get Single Password Entry
+const getPassword = async (pk) => {
+  try {
+    const response = await api.get(`/passwords/${pk}/`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw new Error('Get Password failed');
+  }
+};
+// Update Password Entry
+const updatePassword = async (pk, passwordData) => {
+  try {
+    const response = await api.put(`/passwords/${pk}/update/`, passwordData);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw new Error('Update Password failed');
+  }
+};
+// Delete Password Entry
+const deletePassword = async (pk) => {
+  try {
+    const response = await api.delete(`/passwords/${pk}/delete/`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw new Error('Delete Password failed');
+  }
+};
 
 // General API error handler
 const handleApiError = (error) => {
@@ -119,4 +171,9 @@ const handleApiError = (error) => {
 export default {
   login,
   signUp,
+  createPassword,
+  getPasswords,
+  getPassword,
+  updatePassword,
+  deletePassword,
 };
