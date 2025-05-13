@@ -8,6 +8,7 @@ import SignUpForm from './pages/Signup.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import AddPassword from './pages/AddPassword.jsx'
 import ScanGithub from './pages/ScanGithub.jsx'
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Router>
