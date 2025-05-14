@@ -36,8 +36,12 @@ const Header = () => {
             Add/Edit Password
           </Link>
           <Link
-            to="#"
-            className="text-gray-500 hover:text-indigo-500"
+            to="/githubscan"
+            className={`${
+              location.pathname === '/githubscan'
+                ? 'text-indigo-600 font-medium border-b-2 border-indigo-600 pb-1'
+                : 'text-gray-500 hover:text-indigo-500'
+            }`}
           >
             GitHub Scan
           </Link>
