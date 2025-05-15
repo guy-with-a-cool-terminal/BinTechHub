@@ -56,7 +56,7 @@ api.interceptors.response.use(
   }
 );
 
-// Sign-up (Registration)
+// Sign-up 
 const signUp = async (email, password) => {
   try {
     if (email && password) {
@@ -141,6 +141,52 @@ const deletePassword = async (pk) => {
   }
 };
 
+// GITHUB SCAN ENDPOINTS
+
+// get list of user repositories
+const fetchUserRepositories = async () => {
+  try {
+    const response = await api.get('/github/repos/');
+    return response.data; // expected: [{name, description, image, lastScanned}, ...]
+  } catch (error) {
+    handleApiError(error);
+    throw new Error("Failed to fetch repositories");
+  }
+};
+
+// add repo to scan list
+const addRepositoryToScan = async (repoName) => {
+  try {
+    const response = await api.post('/scan/repos/', { name: repoName });
+    return response.data; // added repo details
+  } catch (error) {
+    handleApiError(error);
+    throw new Error('Failed to add repository for scanning');
+  }
+};
+
+// Trigger scan for a specific repo
+const triggerRepositoryScan = async (repoName) => {
+  try {
+    const response = await api.post(`/scan/repos/${encodeURIComponent(repoName)}/start/`);
+    return response.data; // scan status or results
+  } catch (error) {
+    handleApiError(error);
+    throw new Error('Failed to start repository scan');
+  }
+};
+
+// Get scan results for a repo
+const getScanResults = async (repoName) => {
+  try {
+    const response = await api.get(`/scan/repos/${encodeURIComponent(repoName)}/results/`);
+    return response.data; // scan results details
+  } catch (error) {
+    handleApiError(error);
+    throw new Error('Failed to fetch scan results');
+  }
+};
+
 // General API error handler
 const handleApiError = (error) => {
   if (error.response) {
@@ -176,4 +222,8 @@ export default {
   getPassword,
   updatePassword,
   deletePassword,
+  fetchUserRepositories,
+  addRepositoryToScan,
+  triggerRepositoryScan,
+  getScanResults,
 };
