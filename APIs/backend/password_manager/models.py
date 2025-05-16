@@ -35,6 +35,7 @@ class CustomUser(AbstractBaseUser):
     email = models.EmailField(unique=True)  # Unique email as the identifier
     first_name = models.CharField(max_length=100, blank=True)
     last_name = models.CharField(max_length=100, blank=True)
+    github_access_token = models.CharField(max_length=255, blank=True, null=True)
     date_joined = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

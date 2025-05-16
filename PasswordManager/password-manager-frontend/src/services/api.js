@@ -5,7 +5,7 @@ const API_BASE_URL = 'http://127.0.0.1:8000/api';
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 5000,
-  withCredentials: false,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -143,6 +143,17 @@ const deletePassword = async (pk) => {
 
 // GITHUB SCAN ENDPOINTS
 
+// trigger github oauth
+const startGitHubOAuth = () => {
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    alert("You're not logged in");
+    return;
+  }
+  window.location.href = `http://127.0.0.1:8000/api/github/?token=${token}`;
+};
+
+
 // get list of user repositories
 const fetchUserRepositories = async () => {
   try {
@@ -222,6 +233,7 @@ export default {
   getPassword,
   updatePassword,
   deletePassword,
+  startGitHubOAuth, 
   fetchUserRepositories,
   addRepositoryToScan,
   triggerRepositoryScan,

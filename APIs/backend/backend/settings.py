@@ -1,5 +1,6 @@
 from datetime import timedelta
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -9,7 +10,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-p7xr=s++!smv%2wbw1&v)$t)z_vn@)t!^td_01r#*!mo#h)87q'
+SECRET_KEY = config('SECRET_KEY')
+
+GITHUB_CLIENT_ID = config("GITHUB_CLIENT_ID")
+GITHUB_CLIENT_SECRET = config("GITHUB_CLIENT_SECRET")
+
+# PERSISTENT SESSIONS
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

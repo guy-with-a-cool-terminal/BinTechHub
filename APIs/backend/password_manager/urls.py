@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import *  # Importing everything from views
+from .GithubOauthView import GitHubView
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
@@ -14,4 +15,7 @@ urlpatterns = [
     path('passwords/<int:pk>/', PasswordEntryRetrieveView.as_view(), name='password-retrieve'),  # Retrieve specific password
     path('passwords/<int:pk>/update/', PasswordEntryUpdateView.as_view(), name='password-update'),  # Update password
     path('passwords/<int:pk>/delete/', PasswordEntryDeleteView.as_view(), name='password-delete'),  # Delete password
+    
+    # Github Oauth
+    path('github/', GitHubView.as_view(), name='github-auth'),
 ]

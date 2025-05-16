@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Header from "../components/Header";
 import { HiOutlineSearchCircle, HiCheckCircle, HiExclamationCircle, HiX } from "react-icons/hi";
 import { motion, AnimatePresence } from "framer-motion";
+import api from "../services/api";
 
 // import your API functions (commented out for now)
 // import { fetchRepositories, scanRepository } from "../services/api";
@@ -25,8 +26,12 @@ const GithubScan = () => {
 
   // Example handler for connecting GitHub (placeholder)
   const handleGithubConnect = () => {
-    alert("GitHub OAuth not yet implemented.");
-    // TODO: Redirect to your Django backend OAuth endpoint
+    try{
+      api.startGitHubOAuth();
+    }catch (error){
+      alert("Failed to start GitHub OAuth. Please try again.");
+      console.error(error);
+    }
   };
 
   // Open repo selection modal
