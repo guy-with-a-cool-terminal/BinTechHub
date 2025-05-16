@@ -1,8 +1,9 @@
-const handleGithubConnect = () => {
+const getPasswords = async (page = 1) => { // add page parameter with default
   try {
-    api.startGitHubOAuth();
+    const response = await api.get(`/passwords/?page=${page}`);
+    return response.data;
   } catch (error) {
-    alert("Failed to start GitHub OAuth. Please try again.");
-    console.error(error);
+    handleApiError(error);
+    throw new Error('Get Password List failed');
   }
 };

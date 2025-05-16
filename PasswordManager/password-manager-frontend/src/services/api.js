@@ -101,7 +101,7 @@ const createPassword = async(passwordData) =>{
   }
 }
 // Get password List
-const getPasswords = async () => {
+const getPasswords = async (page=1) => {
   try {
     const response = await api.get(`/passwords/?page=${page}`);
     return response.data;
