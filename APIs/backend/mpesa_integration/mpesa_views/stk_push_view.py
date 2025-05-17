@@ -7,7 +7,7 @@ from decouple import config
 from django_daraja.mpesa.core import MpesaClient
 import json
 import logging
-from .mpesa_integration.models import Payment,User
+from ..models import Payment,User
 
 logger = logging.getLogger(__name__)
 
