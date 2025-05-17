@@ -15,6 +15,13 @@ SECRET_KEY = config('SECRET_KEY')
 GITHUB_CLIENT_ID = config("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = config("GITHUB_CLIENT_SECRET")
 
+# MPesa credentials
+MPESA_CONSUMER_KEY = config("MPESA_CONSUMER_KEY", default="")
+MPESA_CONSUMER_SECRET = config("MPESA_CONSUMER_SECRET", default="")
+MPESA_EXPRESS_SHORTCODE = config("MPESA_EXPRESS_SHORTCODE", default="174379")
+MPESA_ENVIRONMENT = config("MPESA_ENVIRONMENT", default="sandbox")
+MPESA_PASSKEY = config("MPESA_PASSKEY", default="")
+
 # PERSISTENT SESSIONS
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
@@ -38,6 +45,9 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'password_manager',
     'corsheaders',
+    'mpesa_integration',
+    'django_daraja',
+
 ]
 
 MIDDLEWARE = [
