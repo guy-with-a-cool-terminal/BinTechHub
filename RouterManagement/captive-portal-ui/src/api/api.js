@@ -1,5 +1,5 @@
 // Base URL for your backend API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/payments/";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bintechhubapi.onrender.com/api/mpesa/";
 
 /**
  * Utility function to perform fetch with a timeout.
@@ -28,7 +28,7 @@ function fetchWithTimeout(resource, options = {}, timeout = 10000) {
  * @returns {Promise<object>} - JSON response from the backend
  */
 export async function sendSTKPush(phoneNumber, amount) {
-  const endpoint = `${API_BASE_URL}stk-push/`;
+  const endpoint = `${API_BASE_URL}stkpush/`;
 
   const payload = {
     phone_number: phoneNumber,

@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from decouple import config
@@ -12,6 +13,7 @@ from ..models import Payment,User
 logger = logging.getLogger(__name__)
 
 class STKPushAPIView(APIView):
+    permission_classes = [AllowAny]
     def post(self,request):
         phone_number = request.data.get("phone_number")
         amount = request.data.get("amount")
@@ -118,12 +120,11 @@ def mpesa_callback(request):
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
 def calculate_access_time(amount):
-    '''return 30 == 30 minutes'''
-    if amount >= 10:
-        return 30
+    if amount >= 50:
+        return 120
     elif amount >= 20:
         return 60
-    elif amount >= 50:
-        return 120
+    elif amount >= 10:
+        return 30
     else:
         return 15
