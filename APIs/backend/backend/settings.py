@@ -114,8 +114,12 @@ REST_FRAMEWORK = {
 }
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    "https://your-frontend-domain.com",
+    "http://localhost:5173",  # for dev
+]
+
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
