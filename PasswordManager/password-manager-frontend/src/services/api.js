@@ -1,11 +1,12 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+// const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const API_BASE_URL = "https://bintechhubapi.onrender.com/api"
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 5000,
-  withCredentials: true,
+  withCredentials: false,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -23,16 +24,25 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// clear tokens and redirect(helper function)
+const clearTokensAndRedirect = () =>{
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  window.location.replace('/login')
+}
+
 // Handle expired tokens and attempt refresh
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response && error.response.status === 401) {
+    const originalRequest = error.config;
+
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
       const refreshToken = localStorage.getItem('refresh_token');
       if (!refreshToken) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        window.location.replace('/login');
+        clearTokensAndRedirect();
         return Promise.reject(error);
       }
 
@@ -41,17 +51,14 @@ api.interceptors.response.use(
         const access = response.data.access;
         localStorage.setItem('access_token', access);
 
-        error.config.headers['Authorization'] = `Bearer ${access}`;
-        return api(error.config);
+        originalRequest.headers['Authorization'] = `Bearer ${access}`;
+        return api(originalRequest);
       } catch (refreshError) {
         handleApiError(refreshError);
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        window.location.replace('/login');
+        clearTokensAndRedirect();
         return Promise.reject(refreshError);
       }
     }
-
     return Promise.reject(error);
   }
 );
@@ -71,7 +78,6 @@ const signUp = async (email, password) => {
   }
 };
 
-
 // Login
 const login = async (email, password) => {
   try {
@@ -88,7 +94,11 @@ const login = async (email, password) => {
     throw new Error('Login failed');
   }
 };
-// Password management
+
+// logout
+const logout = () =>{
+  clearTokensAndRedirect()
+};
 
 // create password entry
 const createPassword = async(passwordData) =>{
@@ -228,6 +238,7 @@ const handleApiError = (error) => {
 export default {
   login,
   signUp,
+  logout,
   createPassword,
   getPasswords,
   getPassword,
