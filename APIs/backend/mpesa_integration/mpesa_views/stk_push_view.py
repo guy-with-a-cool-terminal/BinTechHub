@@ -62,7 +62,7 @@ class STKPushAPIView(APIView):
             response = getattr(response, "response", None)
             # ensure response is a serializable dictionary
             if not isinstance(response, dict):
-                logger.error("Unexpected response type from MpesaClient: %s", type(raw_response))
+                logger.error("Unexpected response type from MpesaClient: %s", type(response))
                 return Response({
                     "error": "Unexpected response format from payment gateway.",
                     "response": str(response)
