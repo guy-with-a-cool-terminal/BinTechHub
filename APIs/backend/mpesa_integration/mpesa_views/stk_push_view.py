@@ -80,7 +80,7 @@ class STKPushAPIView(APIView):
             logger.error("STK Push Error: %s", str(e))
             return Response({
                 "error":str(e)
-            },status.HTTP_500_INTERNAL_SERVER_ERROR)
+            },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # callback view to handle mpesa responses
 @csrf_exempt
