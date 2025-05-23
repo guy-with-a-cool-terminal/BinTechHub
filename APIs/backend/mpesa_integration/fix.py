@@ -16,6 +16,9 @@ class STKPushAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            mpesa_consumer_key = config("MPESA_CONSUMER_KEY")
+            mpesa_consumer_secret = config("MPESA_CONSUMER_SECRET")
+
             cl = MpesaClient()
             callback_url = config("MPESA_CALLBACK_URL")
 
@@ -28,14 +31,18 @@ class STKPushAPIView(APIView):
             )
             logger.info("STK Push Response: %s", response)
 
-            # Ensure response is JSON-serializable dict
             if isinstance(response, str):
                 try:
                     response = json.loads(response)
                 except json.JSONDecodeError:
                     response = {"message": response}
 
-            return Response(response, status=status.HTTP_200_OK)
+            checkout_request_id = response.get("CheckoutRequestID") or response.get("ResponseCode") or None
+
+            return Response({
+                "CheckoutRequestID": checkout_request_id,
+                "response": response
+            }, status=status.HTTP_200_OK)
 
         except Exception as e:
             logger.error("STK Push Error: %s", str(e))
