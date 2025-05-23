@@ -20,7 +20,13 @@ class Payment(models.Model):
     status = models.CharField(max_length=50)
     transaction_type = models.CharField(max_length=50)
     reference = models.CharField(max_length=100, null=True, blank=True)
+    checkout_request_id = models.CharField(max_length=100,unique=True,null=True,blank=True)
+    access_duration_minutes = models.PositiveIntegerField(null=True,blank=True)
+    start_time = models.DateTimeField(null=True,blank=True)
+    service_type = models.CharField(max_length=50, null=True, blank=True)  # e.g., "captive_portal", "ecommerce"
+
+    
 
     def __str__(self):
-        return f"Payment {self.mpesa_receipt} - {self.status}"
+        return f"Payment {self.mpesa_receipt or self.checkout_request_id}  - {self.status}"
 

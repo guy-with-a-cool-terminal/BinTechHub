@@ -5,9 +5,9 @@ import { useNavigate } from "react-router-dom";
 const PaymentModal = ({ plan, onClose }) => {
   const [method, setMethod] = useState(null);
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [loading, setLoading] = useState(false); // New state to handle loading
-  const [toast, setToast] = useState(""); // New state to handle toast notifications
-  const navigate = useNavigate()
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState("");
+  const navigate = useNavigate(); // For redirection
 
   const handlePayment = async () => {
     if (!method) return;
@@ -18,21 +18,28 @@ const PaymentModal = ({ plan, onClose }) => {
         return;
       }
 
-      // Convert 07xxxxxxxx to 2547xxxxxxxx
       const formattedPhone = phoneNumber.startsWith("254")
         ? phoneNumber
         : phoneNumber.replace(/^0/, "254");
 
       try {
-        setLoading(true); // Show loading spinner
-        const res = await initiateAndConfirmPayment(formattedPhone, plan.price);
-        setToast("STK Push sent! Check your phone.");
-        onClose();
-        navigate("/success");
+        setLoading(true);
+        await initiateAndConfirmPayment(
+          formattedPhone,
+          plan.price,
+          "captive_portal",
+          () => {
+            navigate("/success"); // ✅ Redirect on success
+          },
+          (failMsg) => {
+            setToast(failMsg || "Payment failed.");
+          }
+        );
       } catch (error) {
         setToast(`Payment failed: ${error.message}`);
       } finally {
-        setLoading(false); // Hide loading spinner
+        setLoading(false);
+        onClose();
       }
     } else {
       setToast(`Proceeding to pay Sh ${plan.price} with ${method}`);
@@ -103,7 +110,7 @@ const PaymentModal = ({ plan, onClose }) => {
             }`}
           >
             {loading ? (
-              <span className="spinner-border animate-spin"></span> // A simple spinner icon
+              <span className="spinner-border animate-spin"></span>
             ) : (
               "Pay Now"
             )}
@@ -121,3 +128,4 @@ const PaymentModal = ({ plan, onClose }) => {
 };
 
 export default PaymentModal;
+
