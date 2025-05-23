@@ -53,8 +53,12 @@ class STKPushAPIView(APIView):
                     response = json.loads(response)
                 except json.JSONDecodeError:
                     response = {"message":response}
-            return Response(response, status=status.HTTP_200_OK)
-        
+            checkout_request_id = response.get("CheckoutRequestID") or response.get("ResponseCode") or None
+            return Response({
+                "CheckoutRequestID": checkout_request_id,
+                "response": response
+            }, status=status.HTTP_200_OK)  
+                  
         except Exception as e:
             logger.error("STK Push Error: %s", str(e))
             return Response({
