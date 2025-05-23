@@ -62,11 +62,15 @@ class STKPushAPIView(APIView):
                 try:
                     response = json.loads(response)
                 except json.JSONDecodeError:
-                    response = {"message": response}
-            checkout_request_id = safe_get(response, "CheckoutRequestID", "ResponseCode")
-            
-            if checkout_request_id is None:
-            logger.warning(f"Could not find CheckoutRequestID or ResponseCode in response: {response}")
+                    response = {"message": response}         
+            # Validate CheckoutRequestID
+            checkout_request_id = response.get("CheckoutRequestID")
+            if not checkout_request_id:
+                logger.warning(f"Missing CheckoutRequestID in STK Push response: {response}")
+                return Response({
+                    "error": "Missing CheckoutRequestID in STK push response",
+                    "raw_response": response
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             return Response({
                 "CheckoutRequestID": checkout_request_id,
