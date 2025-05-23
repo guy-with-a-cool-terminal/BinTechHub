@@ -28,6 +28,16 @@ class STKPushAPIView(APIView):
             return Response({
                 "error": "Phone number must be in format 2547XXXXXXXX"
             },status=status.HTTP_400_BAD_REQUEST)
+            
+        def safe_get(obj, *keys):
+            for key in keys:
+                if isinstance(obj, dict):
+                    value = obj.get(key)
+                else:
+                    value = getattr(obj, key, None)
+                if value is not None:
+                    return value
+            return None
         
         try:
             # load credentials from .env
@@ -48,17 +58,16 @@ class STKPushAPIView(APIView):
             )
             logger.info("STK Push Response: %s", response)
             # ensure response is a serializable dictionary
-            if isinstance(response,str):
+            if isinstance(response, str):
                 try:
                     response = json.loads(response)
                 except json.JSONDecodeError:
-                    response = {"message":response}
-            checkout_request_id = response.get("CheckoutRequestID") or response.get("ResponseCode") or None
+                    response = {"message": response}
+            checkout_request_id = safe_get(response, "CheckoutRequestID", "ResponseCode")
             return Response({
                 "CheckoutRequestID": checkout_request_id,
                 "response": response
-            }, status=status.HTTP_200_OK)  
-                  
+            }, status=status.HTTP_200_OK)              
         except Exception as e:
             logger.error("STK Push Error: %s", str(e))
             return Response({
