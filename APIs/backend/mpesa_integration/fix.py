@@ -4,7 +4,7 @@ class STKPushAPIView(APIView):
     def post(self, request):
         phone_number = request.data.get("phone_number")
         amount = request.data.get("amount")
-        service_type = request.data.get("service_type", "generic")  # captive portals, ecommerce, etc
+        service_type = request.data.get("service_type", "generic")  # captive portals, ecommerce etc
 
         if not phone_number or not amount:
             return Response({
@@ -16,8 +16,19 @@ class STKPushAPIView(APIView):
                 "error": "Phone number must be in format 2547XXXXXXXX"
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # helper to safely extract from dict or object
+        def safe_get(obj, *keys):
+            for key in keys:
+                if isinstance(obj, dict):
+                    value = obj.get(key)
+                else:
+                    value = getattr(obj, key, None)
+                if value is not None:
+                    return value
+            return None
+
         try:
-            # Load credentials from .env
+            # Load credentials
             mpesa_consumer_key = config("MPESA_CONSUMER_KEY")
             mpesa_consumer_secret = config("MPESA_CONSUMER_SECRET")
 
@@ -25,26 +36,30 @@ class STKPushAPIView(APIView):
             cl = MpesaClient()
             callback_url = config("MPESA_CALLBACK_URL")
 
-            # Call STK Push
-            response = cl.stk_push(
+            # Initiate STK Push
+            raw_response = cl.stk_push(
                 phone_number,
                 amount,
                 "CaptivePortal",  # account ref
                 "Payment Service",
                 callback_url
             )
-            logger.info("STK Push Response: %s", response)
+            logger.info("Raw STK Push Response: %s", raw_response)
 
-            # Ensure response is a dict
-            if isinstance(response, str):
-                try:
-                    response = json.loads(response)
-                except json.JSONDecodeError:
-                    response = {"message": response}
+            # Convert MpesaResponse to dict
+            response = getattr(raw_response, "response", None)
 
-            # Validate CheckoutRequestID
-            checkout_request_id = response.get("CheckoutRequestID")
-            if not checkout_request_id:
+            if not isinstance(response, dict):
+                logger.error("Unexpected response type from MpesaClient: %s", type(raw_response))
+                return Response({
+                    "error": "Unexpected response format from payment gateway.",
+                    "raw_response": str(raw_response)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            # Use safe_get to fetch CheckoutRequestID or fallback
+            checkout_request_id = safe_get(response, "CheckoutRequestID", "ResponseCode")
+
+            if not checkout_request_id or "CheckoutRequestID" not in response:
                 logger.warning(f"Missing CheckoutRequestID in STK Push response: {response}")
                 return Response({
                     "error": "Missing CheckoutRequestID in STK push response",
@@ -61,4 +76,3 @@ class STKPushAPIView(APIView):
             return Response({
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-s
