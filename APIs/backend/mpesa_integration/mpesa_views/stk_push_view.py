@@ -59,13 +59,13 @@ class STKPushAPIView(APIView):
             logger.info("STK Push Response: %s", response)
             
             # Convert MpesaResponse to dict
-            response = getattr(raw_response, "response", None)
+            response = getattr(response, "response", None)
             # ensure response is a serializable dictionary
             if not isinstance(response, dict):
                 logger.error("Unexpected response type from MpesaClient: %s", type(raw_response))
                 return Response({
                     "error": "Unexpected response format from payment gateway.",
-                    "raw_response": str(raw_response)
+                    "response": str(response)
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             # Use safe_get to fetch CheckoutRequestID or fallback
             checkout_request_id = safe_get(response, "CheckoutRequestID", "ResponseCode")
@@ -73,7 +73,7 @@ class STKPushAPIView(APIView):
                 logger.warning(f"Missing CheckoutRequestID in STK Push response: {response}")
                 return Response({
                     "error": "Missing CheckoutRequestID in STK push response",
-                    "raw_response": response
+                    "response": response
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             return Response({
