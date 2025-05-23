@@ -64,6 +64,10 @@ class STKPushAPIView(APIView):
                 except json.JSONDecodeError:
                     response = {"message": response}
             checkout_request_id = safe_get(response, "CheckoutRequestID", "ResponseCode")
+            
+            if checkout_request_id is None:
+            logger.warning(f"Could not find CheckoutRequestID or ResponseCode in response: {response}")
+            
             return Response({
                 "CheckoutRequestID": checkout_request_id,
                 "response": response
