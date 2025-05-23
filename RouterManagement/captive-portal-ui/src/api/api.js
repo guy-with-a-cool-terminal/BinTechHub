@@ -20,19 +20,13 @@ function fetchWithTimeout(resource, options = {}, timeout = 10000) {
   }).finally(() => clearTimeout(id)); // Clear timeout when done
 }
 
-/**
- * Send an STK Push request to the backend to initiate payment via M-Pesa
- *
- * @param {string} phoneNumber - The user's phone number in MSISDN format (e.g., 254712345678)
- * @param {number} amount - The amount to charge the user
- * @returns {Promise<object>} - JSON response from the backend
- */
-export async function sendSTKPush(phoneNumber, amount) {
+export async function sendSTKPush(phoneNumber, amount,serviceType = 'captive_portal') {
   const endpoint = `${API_BASE_URL}stkpush/`;
 
   const payload = {
     phone_number: phoneNumber,
     amount: amount,
+    service_type: serviceType,
   };
 
   try {
@@ -57,5 +51,38 @@ export async function sendSTKPush(phoneNumber, amount) {
     // Log and propagate error for frontend handling
     console.error("STK push error:", error);
     throw error;
+  }
+}
+
+export async function initiateAndConfirmPayment(phoneNumber, amount, serviceType = "captive_portal", onSuccess, onFailure) {
+  try {
+    const stkResponse = await sendSTKPush(phoneNumber, amount, serviceType);
+    const checkoutId = stkResponse.CheckoutRequestID;
+
+    if (!checkoutId) throw new Error("Missing CheckoutRequestID in response.");
+
+    // Poll for payment status
+    const pollInterval = setInterval(async () => {
+      try {
+        const statusRes = await fetch(`${API_BASE_URL}status/?checkout_id=${checkoutId}`);
+        const statusData = await statusRes.json();
+
+        if (statusData.status === "Success") {
+          clearInterval(pollInterval);
+          onSuccess?.();
+        } else if (statusData.status === "Failed") {
+          clearInterval(pollInterval);
+          onFailure?.("Payment failed.");
+        }
+      } catch (pollErr) {
+        console.warn("Polling error:", pollErr);
+      }
+    }, 3000);
+
+    return stkResponse;
+  } catch (err) {
+    console.error("Payment initiation failed:", err);
+    onFailure?.(err.message || "Payment failed.");
+    throw err;
   }
 }
