@@ -47,7 +47,7 @@ class STKPushAPIView(APIView):
                 callback_url
             )
             logger.info("STK Push Response: %s", response)
-            checkout_id = response.get("CheckoutRequestID")
+            checkout_id = getattr(response,"CheckoutRequestID",None)
             # save payment with service type
             Payment.objects.create(
                 phone_number=phone_number,
