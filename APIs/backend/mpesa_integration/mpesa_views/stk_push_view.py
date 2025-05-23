@@ -47,6 +47,14 @@ class STKPushAPIView(APIView):
                 callback_url
             )
             logger.info("STK Push Response: %s", response)
+            # ensure response is a serializable dictionary
+            if isinstance(response,str):
+                try:
+                    response = json.loads(response)
+                except json.JSONDecodeError:
+                    response = {"message":response}
+            return Response(response, status=status.HTTP_200_OK)
+        
         except Exception as e:
             logger.error("STK Push Error: %s", str(e))
             return Response({
