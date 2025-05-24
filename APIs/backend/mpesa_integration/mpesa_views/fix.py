@@ -18,8 +18,6 @@ class STKPushAPIView(APIView):
         phone_number = request.data.get("phone_number")
         amount = request.data.get("amount")
         service_type = request.data.get("service_type", "generic") # captive portals,ecommerce etc
-        logger.info(f"Received STK Push request with phone_number={phone_number}, amount={amount}, service_type={service_type}")
-        
         
         if not phone_number or not amount:
             return Response({
@@ -31,6 +29,16 @@ class STKPushAPIView(APIView):
                 "error": "Phone number must be in format 2547XXXXXXXX"
             },status=status.HTTP_400_BAD_REQUEST)
             
+        def safe_get(obj, *keys):
+            for key in keys:
+                if isinstance(obj, dict):
+                    value = obj.get(key)
+                else:
+                    value = getattr(obj, key, None)
+                if value is not None:
+                    return value
+            return None
+        
         try:
             # load credentials from .env
             mpesa_consumer_key = config("MPESA_CONSUMER_KEY")
@@ -39,7 +47,7 @@ class STKPushAPIView(APIView):
             # initialize mpesa client
             cl = MpesaClient()
             callback_url = config("MPESA_CALLBACK_URL")
-            logger.debug(f"MpesaClient initialized with callback URL: {callback_url}")
+            
             # call stk_push
             response = cl.stk_push(
                 phone_number,
@@ -49,48 +57,28 @@ class STKPushAPIView(APIView):
                 callback_url
             )
             logger.info("STK Push Response: %s", response)
-            logger.info("STK Push Response type: %s", type(response))
             
-            # wrap response depending on structure
-            if hasattr(response,"response"):
-                response_data = response.response  # django-daraja response object
-                logger.debug("Using response.response as response_data")
-            elif hasattr(response,"json"):
-                try:
-                    # fallback for raw requests response
-                    response_data = response.json()
-                    logger.debug("Parsed response.json() successfully")
-                except Exception as parse_error:
-                    logger.error("Failed to parse STK push response JSON: %s", str(parse_error))
-                    return Response({
-                        "error": "Failed to parse response from payment gateway",
-                        "raw_response": str(response)
-                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            elif isinstance(response,dict):
-                response_data = response
-                logger.debug("Response is dict, used directly")
-            else:
-                logger.error("Unexpected STK Push response format: %s", response)
+            # Convert MpesaResponse to dict
+            response = getattr(response, "response", None)
+            # ensure response is a serializable dictionary
+            if not isinstance(response, dict):
+                logger.error("Unexpected response type from MpesaClient: %s", type(response))
                 return Response({
                     "error": "Unexpected response format from payment gateway.",
                     "response": str(response)
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            # raw response data
-            logger.info("STK Push Response Data: %s", response_data)
-        
-            # fetch CheckoutRequestID
-            checkout_request_id = response_data.get("CheckoutRequestID")
+            # Use safe_get to fetch CheckoutRequestID or fallback
+            checkout_request_id = safe_get(response, "CheckoutRequestID", "ResponseCode")
             if not checkout_request_id:
-                logger.warning(f"Missing CheckoutRequestID in STK Push response: {response_data}")
+                logger.warning(f"Missing CheckoutRequestID in STK Push response: {response}")
                 return Response({
                     "error": "Missing CheckoutRequestID in STK push response",
-                    "response": response_data
+                    "response": response
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            logger.info(f"STK Push successful, CheckoutRequestID: {checkout_request_id}")
             
             return Response({
                 "CheckoutRequestID": checkout_request_id,
-                "response": response_data
+                "response": response
             }, status=status.HTTP_200_OK)              
         except Exception as e:
             logger.error("STK Push Error: %s", str(e))
@@ -213,4 +201,3 @@ class PaymentStatusView(APIView):
             }, status=200)
         except Payment.DoesNotExist:
             return Response({"status": "Pending"}, status=200)
-
