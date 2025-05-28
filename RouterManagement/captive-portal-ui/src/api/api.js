@@ -1,17 +1,8 @@
 // Base URL for your backend API
-// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bintechhubapi.onrender.com/api/mpesa/";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api/mpesa/";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bintechhubapi.onrender.com/api/mpesa/";
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api/mpesa/";
 
 
-/**
- * Utility function to perform fetch with a timeout.
- * Helps prevent hanging requests when backend is slow or unreachable.
- *
- * @param {string} resource - The URL to fetch
- * @param {object} options - Fetch options (method, headers, body, etc.)
- * @param {number} timeout - Timeout in milliseconds (default is 10 seconds)
- * @returns {Promise<Response>} - The fetch response
- */
 function fetchWithTimeout(resource, options = {}, timeout = 10000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout); // Cancel request after timeout
