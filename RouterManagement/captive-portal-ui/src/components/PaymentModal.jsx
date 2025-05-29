@@ -17,29 +17,36 @@ const PaymentModal = ({ plan, onClose }) => {
         setToast("Please enter a valid phone number.");
         return;
       }
-
-      // Convert 07xxxxxxxx to 2547xxxxxxxx
       const formattedPhone = phoneNumber.startsWith("254")
         ? phoneNumber
         : phoneNumber.replace(/^0/, "254");
 
       try {
         setLoading(true); // Show loading spinner
-        const res = await initiateAndConfirmPayment(formattedPhone, plan.price);
         setToast("STK Push sent! Check your phone.");
-        onClose();
-        navigate("/success");
+        await initiateAndConfirmPayment(
+          formattedPhone,
+          plan.price,
+          "captive_portal",
+          () => {
+          setToast("Payment confirmed!");
+          onClose();
+          navigate("/success"); 
+        },
+        (error) => {
+          setToast(error || "Payment failed.");
+          setLoading(false); // Stop loading on failure
+        }
+        );
       } catch (error) {
         setToast(`Payment failed: ${error.message}`);
-      } finally {
-        setLoading(false); // Hide loading spinner
+        setLoading(false);
       }
     } else {
       setToast(`Proceeding to pay Sh ${plan.price} with ${method}`);
       onClose();
     }
   };
-
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-sm w-full">
