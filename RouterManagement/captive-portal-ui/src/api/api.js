@@ -1,19 +1,17 @@
 // Base URL for your backend API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bintechhubapi.onrender.com/api/mpesa/";
-// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api/mpesa/";
-
 
 function fetchWithTimeout(resource, options = {}, timeout = 10000) {
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout); // Cancel request after timeout
+  const id = setTimeout(() => controller.abort(), timeout);
 
   return fetch(resource, {
     ...options,
-    signal: controller.signal, // Connect the controller to the fetch
-  }).finally(() => clearTimeout(id)); // Clear timeout when done
+    signal: controller.signal,
+  }).finally(() => clearTimeout(id));
 }
 
-export async function sendSTKPush(phoneNumber, amount,serviceType = 'captive_portal') {
+export async function sendSTKPush(phoneNumber, amount, serviceType = 'captive_portal') {
   const endpoint = `${API_BASE_URL}stkpush/`;
 
   const payload = {
@@ -34,16 +32,15 @@ export async function sendSTKPush(phoneNumber, amount,serviceType = 'captive_por
     const data = await response.json();
 
     if (!response.ok) {
-      // If server responded with an error status
-      throw new Error(data?.error || "STK push failed. Please try again.");
+      // Log detailed error, but return a generic one
+      console.error("STK Push backend error:", data);
+      throw new Error("Something went wrong during payment initiation. Please try again.");
     }
 
-    // Return the backend's success response
     return data;
   } catch (error) {
-    // Log and propagate error for frontend handling
-    console.error("STK push error:", error);
-    throw error;
+    console.error("STK push network/client error:", error);
+    throw new Error("Failed to reach payment service. Check your network and try again.");
   }
 }
 
@@ -52,10 +49,15 @@ export async function initiateAndConfirmPayment(phoneNumber, amount, serviceType
     const stkResponse = await sendSTKPush(phoneNumber, amount, serviceType);
     const checkoutId = stkResponse.CheckoutRequestID;
 
-    if (!checkoutId) throw new Error("Missing CheckoutRequestID in response.");
+    if (!checkoutId) throw new Error("Unable to initiate payment at the moment.");
 
-    // Poll for payment status
+    let attempts = 0;
+    const maxAttempts = 10;
+    const intervalMs = 3000;
+
     const pollInterval = setInterval(async () => {
+      attempts += 1;
+
       try {
         const statusRes = await fetch(`${API_BASE_URL}status/?checkout_id=${checkoutId}`);
         const statusData = await statusRes.json();
@@ -65,17 +67,25 @@ export async function initiateAndConfirmPayment(phoneNumber, amount, serviceType
           onSuccess?.();
         } else if (statusData.status === "Failed") {
           clearInterval(pollInterval);
-          onFailure?.("Payment failed.");
+          onFailure?.("Payment was not successful.");
+        } else if (attempts >= maxAttempts) {
+          clearInterval(pollInterval);
+          onFailure?.("Payment verification timed out. Please check again later.");
         }
       } catch (pollErr) {
         console.warn("Polling error:", pollErr);
+        // Optional: Fail fast on polling error
+        if (attempts >= maxAttempts) {
+          clearInterval(pollInterval);
+          onFailure?.("Unable to verify payment status. Try again later.");
+        }
       }
-    }, 3000);
+    }, intervalMs);
 
     return stkResponse;
   } catch (err) {
     console.error("Payment initiation failed:", err);
-    onFailure?.(err.message || "Payment failed.");
+    onFailure?.(err.message || "Payment could not be started.");
     throw err;
   }
 }
