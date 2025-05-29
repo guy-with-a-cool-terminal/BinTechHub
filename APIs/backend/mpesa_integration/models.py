@@ -21,7 +21,7 @@ class Payment(models.Model):
     phone_number = models.CharField(max_length=15)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     mpesa_receipt = models.CharField(max_length=50, unique=True,null=True, blank=True)
-    transaction_date = models.DateTimeField()
+    transaction_date = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pending")
     transaction_type = models.CharField(max_length=50)
     reference = models.CharField(max_length=100, null=True, blank=True)
