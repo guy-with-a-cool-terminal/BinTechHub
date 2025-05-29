@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from django.utils.dateparse import parse_datetime
 from decouple import config
 from django_daraja.mpesa.core import MpesaClient
 import json
@@ -18,9 +19,7 @@ class STKPushAPIView(APIView):
         phone_number = request.data.get("phone_number")
         amount = request.data.get("amount")
         service_type = request.data.get("service_type", "generic") # captive portals,ecommerce etc
-        logger.info(f"Received STK Push request with phone_number={phone_number}, amount={amount}, service_type={service_type}")
-        
-        
+                
         if not phone_number or not amount:
             return Response({
                 "error": "Phone number and amount are required."
@@ -39,7 +38,6 @@ class STKPushAPIView(APIView):
             # initialize mpesa client
             cl = MpesaClient()
             callback_url = config("MPESA_CALLBACK_URL")
-            logger.debug(f"MpesaClient initialized with callback URL: {callback_url}")
             # call stk_push
             response = cl.stk_push(
                 phone_number,
@@ -47,19 +45,13 @@ class STKPushAPIView(APIView):
                 "CaptivePortal", #account ref
                 "Payment Service",
                 callback_url
-            )
-            logger.info("STK Push Response: %s", response)
-            logger.info("STK Push Response type: %s", type(response))
-            
+            )  
             # wrap response depending on structure
             if hasattr(response,"response"):
                 response_data = response.response  # django-daraja response object
-                logger.debug("Using response.response as response_data")
             elif hasattr(response,"json"):
                 try:
-                    # fallback for raw requests response
                     response_data = response.json()
-                    logger.debug("Parsed response.json() successfully")
                 except Exception as parse_error:
                     logger.error("Failed to parse STK push response JSON: %s", str(parse_error))
                     return Response({
@@ -81,12 +73,21 @@ class STKPushAPIView(APIView):
             # fetch CheckoutRequestID
             checkout_request_id = response_data.get("CheckoutRequestID")
             if not checkout_request_id:
-                logger.warning(f"Missing CheckoutRequestID in STK Push response: {response_data}")
                 return Response({
                     "error": "Missing CheckoutRequestID in STK push response",
                     "response": response_data
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             logger.info(f"STK Push successful, CheckoutRequestID: {checkout_request_id}")
+            # create pending payment record
+            Payment.objects.create(
+                phone_number=phone_number,
+                amount=amount,
+                status="Pending",
+                transaction_type="STK Push",
+                checkout_request_id=checkout_request_id,
+                reference="STK Request",
+                service_type=service_type
+            )
             
             return Response({
                 "CheckoutRequestID": checkout_request_id,
@@ -115,16 +116,16 @@ def mpesa_callback(request):
         items = metadata.get('Item', [])
             
         # helper function to extract item values by name
-        def get_value(name):
-            for item in items:
+        def get_value(items_list,name):
+            for item in items_list:
                 if item['Name'] == name:
                     return item.get('Value')
             return None
             
-        amount = get_value('Amount')
-        mpesa_receipt = get_value('MpesaReceiptNumber')
-        phone_number = get_value('PhoneNumber')
-        transaction_date_raw = get_value('TransactionDate')
+        amount = get_value(items,'Amount')
+        mpesa_receipt = get_value(items,'MpesaReceiptNumber')
+        phone_number = get_value(items,'PhoneNumber')
+        transaction_date_raw = get_value(items,'TransactionDate')
             
         # check if all necessary data is available
         if not all([amount, phone_number, mpesa_receipt, transaction_date_raw]):
@@ -142,14 +143,16 @@ def mpesa_callback(request):
         payment_status_response = mpesa_client.payment_status(mpesa_receipt)
         if payment_status_response['ResultCode'] != 0:
             return JsonResponse({"error": "Failed to verify payment with M-Pesa."}, status=400)
-        actual_amount = payment_status_response['CallbackMetadata']['Item'][0]['Value']
+        
+        items_verified = payment_status_response.get("CallbackMetadata", {}).get("Item", [])
+        actual_amount = get_value(items_verified,'Amount')
 
         # Prevent tampering by comparing callback amount to verification amount
         if float(actual_amount) != float(amount):
             return JsonResponse({"error": "Amount mismatch. Payment is invalid."}, status=400)
                         
         # link payments to the user,create one if doesn't exist
-        user,created = User.objects.get_or_create(phone_number=phone_number)            
+        user,_ = User.objects.get_or_create(phone_number=phone_number)            
         # Find payment record by checkout_request_id or create if missing
         payment,created = Payment.objects.get_or_create(
             checkout_request_id=checkout_id,
@@ -172,21 +175,19 @@ def mpesa_callback(request):
             payment.user = user
             payment.phone_number = phone_number
             payment.amount = amount
-        # Apply captive portal duration logic ONLY if service_type is captive_portal
-        if payment.service_type == "captive_portal":
+        # ONLY if service_type is captive_portal
+        if payment.service_type == "captive_portal" and result_code == 0:
             payment.access_duration_minutes = calculate_access_time(float(amount))
             payment.start_time = transaction_datetime
             
-        payment.save()
-        
+        payment.save() 
         logger.info("Payment successfully saved: %s",payment)
         return JsonResponse({"message": "Callback processed successfully"}, status=200)
         
     except Exception as e:
         logger.error("Error in MPESA callback: %s", str(e))
         return JsonResponse({"error": "Invalid data or processing error"}, status=400)
-    return JsonResponse({"error": "Invalid request method"}, status=405)
-
+   
 def calculate_access_time(amount):
     if amount >= 50:
         return 120
@@ -203,7 +204,6 @@ class PaymentStatusView(APIView):
         checkout_id = request.query_params.get('checkout_id')
         if not checkout_id:
             return Response({"error": "checkout_id is required"}, status=400)
-
         try:
             payment = Payment.objects.get(checkout_request_id=checkout_id)
             return Response({

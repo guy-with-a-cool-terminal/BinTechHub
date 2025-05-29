@@ -160,7 +160,7 @@ const startGitHubOAuth = () => {
     alert("You're not logged in");
     return;
   }
-  window.location.href = `http://127.0.0.1:8000/api/github/?token=${token}`;
+  window.location.href = `${API_BASE_URL}/github/?token=${token}`;
 };
 
 
