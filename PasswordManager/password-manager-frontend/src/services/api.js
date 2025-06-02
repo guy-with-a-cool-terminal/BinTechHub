@@ -64,19 +64,28 @@ api.interceptors.response.use(
 );
 
 // Sign-up 
-const signUp = async (email, password) => {
+const signUp = async (email, password, firebase_token, uid = null, isGoogle = false) => {
   try {
-    if (email && password) {
-      const response = await api.post('/signup/', { email, password });
-      return response.data;
-    } else {
-      alert("Email and password are required.");
+    if (!email) {
+      alert("Email is required.");
+      return;
     }
+    // Build payload dynamically based on sign-up type
+    const payload = {
+      email,
+      firebase_token,
+      ...(password && { password }),  // include password only if present
+      ...(uid && { uid }),
+      isGoogle,
+    };
+    const response = await api.post('/signup/', payload);
+    return response.data;
   } catch (error) {
     handleApiError(error);
     throw new Error('Sign-up failed');
   }
 };
+
 
 // Login
 const login = async (email, password) => {
