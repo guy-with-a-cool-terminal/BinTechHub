@@ -4,8 +4,6 @@ import api from '../services/api';
 import React, { useState } from 'react'; // Import useState
 import { getAuth, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../services/FirebaseAuth/firebase';
-
-// Import Google Icon (you might want to import your exact Google icon if Login.jsx uses a custom one)
 import { FcGoogle } from 'react-icons/fc';
 
 export default function SignUpForm() {
@@ -94,8 +92,6 @@ export default function SignUpForm() {
       const user = result.user;
       const idToken = await user.getIdToken();
       localStorage.setItem('firebase_token', idToken);
-
-      // Send user email,  idToken to backend
       await api.signUp(user.email,idToken);
       navigate('/login');
     } catch (err) {
@@ -119,16 +115,7 @@ export default function SignUpForm() {
         {/* Error message for form submission */}
         {error && <div className="mb-4 text-red-500">{error}</div>}
 
-        {/* Google Sign Up Button with icon */}
-        <button
-          type="button"
-          onClick={handleGoogleSignUp}
-          className={`w-full flex items-center justify-center gap-3 border border-gray-300 hover:bg-gray-100 text-gray-800 py-3 rounded-full font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 transition transform duration-200 mb-6 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-          disabled={isLoading}
-        >
-          <FcGoogle className="h-6 w-6" />
-          {isLoading ? 'Signing Up...' : 'Sign Up with Google'}
-        </button>
+        
 
         {/* Form */}
         <form className="space-y-5" onSubmit={handleSignUp}>
@@ -189,7 +176,6 @@ export default function SignUpForm() {
             {confirmPasswordError && <p className="text-red-500 text-sm mt-2">{confirmPasswordError}</p>}
           </div>
 
-          {/* Sign Up Button */}
           <button
             type="submit"
             className={`w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-full font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 transition transform duration-200 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -199,6 +185,21 @@ export default function SignUpForm() {
           </button>
         </form>
 
+        <div className="my-6 flex items-center before:flex-1 before:border-t before:border-gray-300 after:flex-1 after:border-t after:border-gray-300">
+          <p className="mx-4 text-gray-500 font-semibold">OR</p>
+        </div>
+
+        {/* Google Sign Up Button with icon */}
+        <button
+          type="button"
+          onClick={handleGoogleSignUp}
+          className={`w-full flex items-center justify-center gap-3 border border-gray-300 hover:bg-gray-100 text-gray-800 py-3 rounded-full font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 transition transform duration-200 mb-6 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          disabled={isLoading}
+        >
+          <FcGoogle className="h-6 w-6" />
+          {isLoading ? 'Signing Up...' : 'Sign Up with Google'}
+        </button>
+        
         {/* Switch to Login Link */}
         <p className="mt-6 text-sm sm:text-base md:text-lg text-gray-600">
           Already have an account?{' '}
