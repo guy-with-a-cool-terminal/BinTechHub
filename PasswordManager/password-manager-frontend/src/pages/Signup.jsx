@@ -67,7 +67,7 @@ export default function SignUpForm() {
       localStorage.setItem('firebase_token', idToken); 
       // send user data to backend
       await api.signUp(email,idToken);
-      navigate('/login');
+      navigate('/dashboard');
     } catch (err) {
       console.error('signup failed:', err);
       if (err.code === 'auth/email-already-in-use') {
