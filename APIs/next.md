@@ -1,123 +1,105 @@
+---
 
-### ✅ **What You’ve Already Done**
-
-1. **Built a Working M-Pesa STK Push Backend**
-
-   * Using `django-daraja`, STK Push requests work.
-   * You’ve implemented a callback handler that processes payments and stores data in your DB.
-
-2. **Implemented Frontend Integration**
-
-   * Frontend handles STK initiation and polling for status.
-   * Users are redirected after payment, and the flow is mostly smooth.
-
-3. **Successfully Triggered Payments (In Sandbox)**
-
-   * You’ve confirmed STK push fires, payment is handled, and logs are in place.
-   * You've confirmed that you can get results depending on real/sandbox mode.
+# Step-by-Step Plan for Adding Multi-Developer Support to Your DRF M-Pesa API
 
 ---
 
-### 🚀 **Phase 1: Multi-Client Readiness (Single Backend, Multiple M-Pesa Apps)**
+### **What you have done already:**
 
-**Goal:** Enable multiple clients to use your service using their own Daraja app credentials (but still via your backend).
+* A working **Payment and User (payer) model** that tracks payments per phone number.
+* API endpoints to:
 
-1. **Frontend Credential Input**
-
-   * Build a dashboard/form where clients can input their:
-
-     * Consumer Key
-     * Consumer Secret
-     * Shortcode (or till)
-     * Passkey
-     * Callback URL (optional, if they want to handle their own callback)
-
-2. **Secure Storage of Credentials**
-
-   * Store the credentials securely in your DB (encrypted).
-   * Associate credentials with the client's account or API key.
-
-3. **Dynamic Credentials Loading**
-
-   * Modify backend to:
-
-     * Load credentials dynamically based on which client is making the API call.
-     * Use headers or tokens to identify client, then fetch correct credentials.
-
-4. **Restricting or Customizing STK Push**
-
-   * Customize STK push so the transaction shows the client's name or business in the prompt.
-   * Ensure callback handling is generic enough to cover all clients unless overridden.
+  * Trigger STK Push with fixed Daraja credentials from `.env`.
+  * Receive M-Pesa callback to update payment status.
+  * Query payment status.
+* No authentication or developer-level separation yet.
+* Payment flow and database schema suited for single-developer (yourself).
 
 ---
 
-### 🧠 **Phase 2: Developer Dashboard / API-as-a-Service**
+### **Goal:**
 
-**Goal:** Make it a plug-and-play API product.
-
-1. **Self-Service Client Onboarding**
-
-   * Signup + login flow.
-   * “Create App” interface — each app has a key/token and config.
-
-2. **API Key System**
-
-   * Issue API tokens per client/app.
-   * Every API request (STK push, status) is authenticated via token.
-
-3. **Usage Tracking + Logs**
-
-   * Show usage metrics per client: number of transactions, last 24h, success/failure, etc.
-   * Show logs (basic) or allow export.
-
-4. **Documentation Portal**
-
-   * API reference.
-   * Guides on how to integrate using your API from various stacks (Node.js, Python, PHP, etc.)
+Allow multiple developers to use your API **independently**, each with their own Daraja credentials, and keep payment data separate by developer, without affecting how payers or payments work.
 
 ---
 
-### 💰 **Phase 3: Monetization + Scaling**
+### **Step 1: Design a Developer Model**
 
-**Goal:** Make your system sustainable.
+* Create a new **Developer** model that stores:
 
-1. **Pricing Plans**
-
-   * Free plan: limited transactions/month or sandbox only.
-   * Paid tiers: more STK pushes, support, production support.
-
-2. **Rate Limits / Quotas**
-
-   * Enforce limits per API key based on plan.
-   * Dashboard shows quota usage.
-
-3. **Billing System**
-
-   * Integrate Stripe, M-Pesa Paybill, or other methods for clients to pay you.
-   * Auto-disable apps over limit or unpaid.
+  * Developer identity info (email, Firebase UID, etc.).
+  * Their unique Daraja credentials (consumer key & secret).
+* This model will link payments to the developer making the API call.
 
 ---
 
-### 🔐 **Phase 4: Compliance, Security & Expansion**
+### **Step 2: Add Developer Link to Payment Model**
 
-**Goal:** Build trust and long-term viability.
+* Add a foreign key from Payment to Developer.
+* This links every payment to the developer responsible for it.
+* The User model (payer) stays the same, tracking phone numbers of payers.
 
-1. **Credential Encryption & Secure Handling**
+---
 
-   * Ensure all stored credentials are encrypted at rest.
-   * Rotate secrets, allow clients to revoke/update.
+### **Step 3: Implement Authentication**
 
-2. **Audit Logs + Alerts**
+* Integrate Firebase Authentication on your frontend.
+* Pass Firebase ID tokens with every API request.
+* On the backend, verify Firebase token to identify the calling developer.
+* Retrieve the developer’s record from the DB using the Firebase UID.
 
-   * Log when credentials are accessed or modified.
-   * Alert client on suspicious activity.
+---
 
-3. **Production-Level Reliability**
+### **Step 4: Modify STK Push Logic**
 
-   * Use Celery or background jobs to handle callback processing reliably.
-   * Set up retries for failed transactions or webhooks.
+* Instead of loading Daraja credentials from `.env`, load them from the **calling developer’s record**.
+* Initialize the MpesaClient with the developer's credentials.
+* Proceed with STK push as usual.
 
-4. **Expand Payment Methods**
+---
 
-   * Add support for Paybill, B2C, C2B, etc.
-   * Eventually add non-M-Pesa integrations (Airtel Money, card, etc.)
+### **Step 5: Link Payments to Developers in API**
+
+* When creating the Payment record after STK push, link it to the developer identified from the token.
+* On payment callbacks:
+
+  * Identify the developer via payment’s developer field.
+  * No changes needed to callback except maybe logging for developer context.
+
+---
+
+### **Step 6: Secure API Endpoints**
+
+* Restrict sensitive API views (STKPush, PaymentStatus) to **authenticated developers only**.
+* Reject requests with invalid or missing Firebase tokens.
+
+---
+
+### **Step 7: Update Frontend SDK**
+
+* Require developers to authenticate with Firebase.
+* Pass Firebase token in API calls.
+* Make no changes to payment data (phone, amount, etc.), just add auth header.
+
+---
+
+### **Step 8: Test and Validate**
+
+* Test with multiple developer accounts, each with their own Daraja credentials.
+* Ensure payments are correctly attributed to the right developer.
+* Verify isolation — developers cannot see or affect each other’s data.
+
+---
+
+### **Summary:**
+
+| Existing             | Change Needed? | Where to Modify                | Notes                                       |
+| -------------------- | -------------- | ------------------------------ | ------------------------------------------- |
+| `User` (payer) model | No             | N/A                            | Remains for phone tracking                  |
+| `Payment` model      | Yes            | Add developer FK               | Link payments to developers                 |
+| `STKPushAPIView`     | Yes            | Load creds from developer      | Use developer’s Daraja keys instead of .env |
+| `mpesa_callback`     | Minimal        | Possibly add developer logging | Payments linked by checkout ID still valid  |
+| Auth system          | Yes            | Add Firebase auth validation   | Identify calling developer                  |
+| API permissions      | Yes            | Restrict sensitive views       | Allow only authenticated developers         |
+| Frontend SDK         | Yes            | Add Firebase token handling    | Pass token in API calls                     |
+

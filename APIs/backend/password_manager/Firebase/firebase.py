@@ -1,8 +1,8 @@
-from decouple import config
+import firebase_admin
 import json
 import base64
-import firebase_admin
 from firebase_admin import credentials
+from decouple import config
 
 firebase_cred_b64 = config('FIREBASE_CRED_BASE64')
 firebase_cred_json = base64.b64decode(firebase_cred_b64).decode('utf-8')

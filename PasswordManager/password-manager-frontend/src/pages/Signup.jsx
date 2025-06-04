@@ -2,10 +2,14 @@ import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/20/solid'; // Imp
 import { useNavigate } from 'react-router-dom'; // Import navigate
 import api from '../services/api';
 import React, { useState } from 'react'; // Import useState
+import { getAuth, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth } from '../services/FirebaseAuth/firebase';
+
+// Import Google Icon (you might want to import your exact Google icon if Login.jsx uses a custom one)
+import { FcGoogle } from 'react-icons/fc';
 
 export default function SignUpForm() {
   const navigate = useNavigate();
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -21,7 +25,6 @@ export default function SignUpForm() {
 
   const validateForm = () => {
     let valid = true;
-    // Reset errors before validation
     setEmailError('');
     setPasswordError('');
     setConfirmPasswordError('');
@@ -33,7 +36,7 @@ export default function SignUpForm() {
       valid = false;
     }
 
-    // Password validation (simple check)
+    // Password validation
     if (password.length < 6) {
       setPasswordError('Password must be at least 6 characters long');
       valid = false;
@@ -49,22 +52,57 @@ export default function SignUpForm() {
   };
 
   const handleSignUp = async (event) => {
-    event.preventDefault(); // Prevent default form submission
-
-    // Validate the form
+    event.preventDefault(); 
     if (!validateForm()) return;
 
-    setIsLoading(true); // Set loading state
+    setIsLoading(true);
+    setError('');
 
     try {
-      // Call the sign-up function from api.js
-      await api.signUp(email, password);
-      navigate('/login'); // Redirect to the login page after successful signup
-    } catch (error) {
-      // Handle signup errors
-      setError('Signup failed. Please try again.');
+      const auth = getAuth();
+      // create user in firebase
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // get the ID token
+      const idToken = await userCredential.user.getIdToken();
+      localStorage.setItem('firebase_token', idToken); 
+      // send user data to backend
+      await api.signUp(email,idToken);
+      navigate('/login');
+    } catch (err) {
+      console.error('signup failed:', err);
+      if (err.code === 'auth/email-already-in-use') {
+        setError('This email already exists');
+      } else {
+        setError('Signup failed. Please try again.');
+      }
     } finally {
-      setIsLoading(false); // Reset loading state
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      const token = credential?.accessToken;
+
+      const user = result.user;
+      const idToken = await user.getIdToken();
+      localStorage.setItem('firebase_token', idToken);
+
+      // Send user email,  idToken to backend
+      await api.signUp(user.email,idToken);
+      navigate('/login');
+    } catch (err) {
+      console.error('Google sign-up failed:', err);
+      setError('Google sign-up failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -80,6 +118,17 @@ export default function SignUpForm() {
 
         {/* Error message for form submission */}
         {error && <div className="mb-4 text-red-500">{error}</div>}
+
+        {/* Google Sign Up Button with icon */}
+        <button
+          type="button"
+          onClick={handleGoogleSignUp}
+          className={`w-full flex items-center justify-center gap-3 border border-gray-300 hover:bg-gray-100 text-gray-800 py-3 rounded-full font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 transition transform duration-200 mb-6 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          disabled={isLoading}
+        >
+          <FcGoogle className="h-6 w-6" />
+          {isLoading ? 'Signing Up...' : 'Sign Up with Google'}
+        </button>
 
         {/* Form */}
         <form className="space-y-5" onSubmit={handleSignUp}>

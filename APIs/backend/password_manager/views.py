@@ -10,41 +10,40 @@ from .serializers import PasswordEntrySerializer
 from .serializers import UserRegistrationSerializer, UserLoginSerializer
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
+from firebase_admin import auth as firebase_auth
 
 User = get_user_model()
-# user registration
-class UserRegistrationView(APIView):
-    permission_classes = [AllowAny] 
-    def post(self,request):
-        # deserialize request data
-        serializer = UserRegistrationSerializer(data=request.data)
-        if serializer.is_valid():
-            # create user if data == valid
-            user = serializer.save()
-            return Response({"message": "User created successfully", "user_id": user.id}, status=status.HTTP_201_CREATED)
-        # return error if data is invalid
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# user login
-class UserLoginView(APIView):
-    permission_classes = [AllowAny] 
-    def post(self, request):
-        serializer = UserLoginSerializer(data=request.data)
-        if serializer.is_valid():
-            email = request.data.get('email')
-            password = request.data.get('password')
-            user = authenticate(email=email, password=password)
-            if user is None:
-                return Response(
-                    {"detail": "Invalid credentials."},
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
-            refresh = RefreshToken.for_user(user)
+# firebase to handle login/signup so now we just verify here
+class FirebaseLoginView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    def post(self,request):
+        print("🔥 FirebaseLoginView hit")
+        id_token = request.data.get('firebase_token')
+        if not id_token:
+            return Response({"detail": "Firebase token missing"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            decoded_token = firebase_auth.verify_id_token(id_token)
+            uid = decoded_token['uid']
+            email = decoded_token.get('email')
+
+            user, created = User.objects.get_or_create(firebase_uid=uid, defaults={"email": email})
+            
+            if not created and user.email != email:
+                user.email = email
+                user.save()
+
+            # Just return success and user info if needed (avoid sending your own JWT)
             return Response({
-                "access_token": str(refresh.access_token),
-                "refresh_token": str(refresh)
+                "message": "User authenticated",
+                "uid": uid,
+                "email": email,
+                "created": created
             }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print("Firebase token verification error:", e)
+            return Response({"detail": "Invalid token"},status=status.HTTP_401_UNAUTHORIZED)
     
 '''Password management views'''
 # Pagination class
