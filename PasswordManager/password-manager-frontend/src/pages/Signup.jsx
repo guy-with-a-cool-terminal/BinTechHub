@@ -64,8 +64,9 @@ export default function SignUpForm() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       // get the ID token
       const idToken = await userCredential.user.getIdToken();
+      localStorage.setItem('firebase_token', idToken); 
       // send user data to backend
-      await api.signUp(email, password, idToken);
+      await api.signUp(email,idToken);
       navigate('/login');
     } catch (err) {
       console.error('signup failed:', err);
@@ -92,10 +93,10 @@ export default function SignUpForm() {
 
       const user = result.user;
       const idToken = await user.getIdToken();
+      localStorage.setItem('firebase_token', idToken);
 
-      // Send user email, no password, idToken, and UID with a flag to backend
-      await api.signUp(user.email, null, idToken, user.uid, true);
-
+      // Send user email,  idToken to backend
+      await api.signUp(user.email,idToken);
       navigate('/login');
     } catch (err) {
       console.error('Google sign-up failed:', err);
