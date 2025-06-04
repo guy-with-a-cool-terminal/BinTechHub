@@ -45,13 +45,9 @@ export default function Login() {
       const firebaseAuth = getAuth();
       const userCredential = await signInWithEmailAndPassword(firebaseAuth, email, password);
       const idToken = await userCredential.user.getIdToken();
-      console.log("ID Token:", idToken);
       localStorage.setItem('firebase_token', idToken);
       await api.login(idToken, email);
-      console.log('Before navigate');
       navigate('/dashboard');
-      console.log('After navigate');
-
     } catch (err) {
       console.error('Login failed:', err);
       setError('Login failed. Please check your credentials and try again.');
@@ -70,13 +66,9 @@ export default function Login() {
       const result = await signInWithPopup(firebaseAuth, provider);
       const user = result.user;
       const idToken = await user.getIdToken();
-      console.log("ID Token:", idToken);
       localStorage.setItem('firebase_token', idToken);
       await api.login(idToken, user.email);
-      console.log('Before navigate');
       navigate('/dashboard');
-      console.log('After navigate');
-
     } catch (err) {
       console.error('Google login failed:', err);
       setError('Google login failed. Please try again.');
