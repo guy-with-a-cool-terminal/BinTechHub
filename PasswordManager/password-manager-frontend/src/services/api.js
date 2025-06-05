@@ -1,22 +1,24 @@
 import axios from 'axios';
 
-// const API_BASE_URL = 'http://127.0.0.1:8000/api';
-const API_BASE_URL = "https://bintechhubapi.onrender.com/api"
+const isDev = window.location.hostname === 'localhost';
+const API_BASE_URL = isDev 
+  ? 'http://127.0.0.1:8000/api' 
+  : 'https://bintechhubapi.onrender.com/api';
+
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 5000,
-  withCredentials: false,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Attach access token to request headers
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
+    const token = localStorage.getItem('firebase_token');
+    // Skip Authorization header for userauth endpoint
+    if (token && !config.url.endsWith('/userauth/')) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
@@ -24,70 +26,37 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// clear tokens and redirect(helper function)
-const clearTokensAndRedirect = () =>{
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
-  window.location.replace('/login')
-}
-
-// Handle expired tokens and attempt refresh
+// Handle 401 errors - clear token and redirect to login
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    if (error.response && error.response.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      const refreshToken = localStorage.getItem('refresh_token');
-      if (!refreshToken) {
-        clearTokensAndRedirect();
-        return Promise.reject(error);
-      }
-
-      try {
-        const response = await api.post('/token/refresh/', { refresh: refreshToken });
-        const access = response.data.access;
-        localStorage.setItem('access_token', access);
-
-        originalRequest.headers['Authorization'] = `Bearer ${access}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        handleApiError(refreshError);
-        clearTokensAndRedirect();
-        return Promise.reject(refreshError);
-      }
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('firebase_token');
+      window.location.replace('/login');
     }
     return Promise.reject(error);
   }
 );
 
-// Sign-up 
-const signUp = async (email, password) => {
+// --- AUTH API ---
+
+// Sign-up - email and Firebase token
+const signUp = async (email, firebase_token) => {
   try {
-    if (email && password) {
-      const response = await api.post('/signup/', { email, password });
-      return response.data;
-    } else {
-      alert("Email and password are required.");
-    }
+    const response = await api.post('/onboarding/userauth/', { email, firebase_token });
+    return response.data;
   } catch (error) {
     handleApiError(error);
     throw new Error('Sign-up failed');
   }
 };
 
-// Login
-const login = async (email, password) => {
+// Login - send firebase_token (email optional)
+const login = async (firebase_token, email = null) => {
   try {
-    const response = await api.post('/login/', { email, password });
-    const { access_token, refresh_token } = response.data;
-
-    // Store tokens in localStorage
-    localStorage.setItem('access_token', access_token);
-    localStorage.setItem('refresh_token', refresh_token);
-
+    const payload = { firebase_token };
+    if (email) payload.email = email;
+    const response = await api.post('/onboarding/userauth/', payload);
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -95,67 +64,68 @@ const login = async (email, password) => {
   }
 };
 
-// logout
-const logout = () =>{
-  clearTokensAndRedirect()
+// Logout - clear token and redirect
+const logout = () => {
+  localStorage.removeItem('firebase_token');
+  window.location.replace('/login');
 };
 
-// create password entry
-const createPassword = async(passwordData) =>{
+// --- PASSWORD APIs ---
+
+const createPassword = async (passwordData) => {
   try {
-    const response = await api.post('/passwords/create/',passwordData);
+    const response = await api.post('/passwords/create/', passwordData);
     return response.data;
   } catch (error) {
     handleApiError(error);
-    throw new Error('create password failed :(')
+    throw new Error('Create password failed');
   }
-}
-// Get password List
-const getPasswords = async (page=1) => {
+};
+
+const getPasswords = async (page = 1) => {
   try {
     const response = await api.get(`/passwords/?page=${page}`);
     return response.data;
   } catch (error) {
     handleApiError(error);
-    throw new Error('Get Password List failed');
+    throw new Error('Get passwords failed');
   }
 };
-// Get Single Password Entry
+
 const getPassword = async (pk) => {
   try {
     const response = await api.get(`/passwords/${pk}/`);
     return response.data;
   } catch (error) {
     handleApiError(error);
-    throw new Error('Get Password failed');
+    throw new Error('Get password failed');
   }
 };
-// Update Password Entry
+
 const updatePassword = async (pk, passwordData) => {
   try {
     const response = await api.put(`/passwords/${pk}/update/`, passwordData);
     return response.data;
   } catch (error) {
     handleApiError(error);
-    throw new Error('Update Password failed');
+    throw new Error('Update password failed');
   }
 };
-// Delete Password Entry
+
 const deletePassword = async (pk) => {
   try {
     const response = await api.delete(`/passwords/${pk}/delete/`);
     return response.data;
   } catch (error) {
     handleApiError(error);
-    throw new Error('Delete Password failed');
+    throw new Error('Delete password failed');
   }
 };
 
-// GITHUB SCAN ENDPOINTS
+// --- GITHUB & SCAN APIs ---
 
-// trigger github oauth
 const startGitHubOAuth = () => {
-  const token = localStorage.getItem('access_token');
+  const token = localStorage.getItem('firebase_token');
   if (!token) {
     alert("You're not logged in");
     return;
@@ -163,71 +133,72 @@ const startGitHubOAuth = () => {
   window.location.href = `${API_BASE_URL}/github/?token=${token}`;
 };
 
-
-// get list of user repositories
 const fetchUserRepositories = async () => {
   try {
     const response = await api.get('/github/repos/');
-    return response.data; // expected: [{name, description, image, lastScanned}, ...]
+    return response.data;
   } catch (error) {
     handleApiError(error);
-    throw new Error("Failed to fetch repositories");
+    throw new Error('Fetch repositories failed');
   }
 };
 
-// add repo to scan list
 const addRepositoryToScan = async (repoName) => {
   try {
     const response = await api.post('/scan/repos/', { name: repoName });
-    return response.data; // added repo details
+    return response.data;
   } catch (error) {
     handleApiError(error);
-    throw new Error('Failed to add repository for scanning');
+    throw new Error('Add repo to scan failed');
   }
 };
 
-// Trigger scan for a specific repo
 const triggerRepositoryScan = async (repoName) => {
   try {
     const response = await api.post(`/scan/repos/${encodeURIComponent(repoName)}/start/`);
-    return response.data; // scan status or results
+    return response.data;
   } catch (error) {
     handleApiError(error);
-    throw new Error('Failed to start repository scan');
+    throw new Error('Trigger repo scan failed');
   }
 };
 
-// Get scan results for a repo
 const getScanResults = async (repoName) => {
   try {
     const response = await api.get(`/scan/repos/${encodeURIComponent(repoName)}/results/`);
-    return response.data; // scan results details
+    return response.data;
   } catch (error) {
     handleApiError(error);
-    throw new Error('Failed to fetch scan results');
+    throw new Error('Get scan results failed');
   }
 };
 
-// General API error handler
+// --- ERROR HANDLER ---
+
 const handleApiError = (error) => {
   if (error.response) {
     console.error('API error:', error.response.data);
-
-    if (error.response.status === 401) {
-      alert('Authentication failed. Please login again.');
-    } else if (error.response.status === 403) {
-      alert('Forbidden: You don’t have permission to perform this action.');
-    } else if (error.response.status === 404) {
-      alert('Resource not found.');
-    } else if (error.response.status === 409) {
-      alert('User with this email already exists.');
-    } else if (error.response.status === 500) {
-      alert('Internal server error.');
-    } else {
-      alert(`API error: ${error.response.data.message || 'Something went wrong.'}`);
+    switch (error.response.status) {
+      case 401:
+        alert('Authentication failed. Please login again.');
+        break;
+      case 403:
+        alert('Forbidden: You don’t have permission.');
+        break;
+      case 404:
+        alert('Resource not found.');
+        break;
+      case 409:
+        alert('User with this email already exists.');
+        break;
+      case 500:
+        alert('Internal server error.');
+        break;
+      default:
+        alert(`API error: ${error.response.data.message || 'Something went wrong.'}`);
     }
   } else if (error.request) {
-    console.error('No response received:', error.request);
+    console.error('No response:', error.request);
     alert('No response from server. Check your connection.');
   } else {
     console.error('Request error:', error.message);
@@ -236,15 +207,15 @@ const handleApiError = (error) => {
 };
 
 export default {
-  login,
   signUp,
+  login,
   logout,
   createPassword,
   getPasswords,
   getPassword,
   updatePassword,
   deletePassword,
-  startGitHubOAuth, 
+  startGitHubOAuth,
   fetchUserRepositories,
   addRepositoryToScan,
   triggerRepositoryScan,
