@@ -4,8 +4,6 @@ from .GithubOauthView import GitHubView
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
-    # User Authentication URLs
-    path('userauth/', FirebaseLoginView.as_view(), name='user-auth'),
     # Password Management URLs
     path('passwords/', PasswordEntryListView.as_view(), name='password-list'),  # List all passwords
     path('passwords/create/', PasswordEntryCreateView.as_view(), name='password-create'),  # Create new password

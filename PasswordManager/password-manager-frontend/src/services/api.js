@@ -43,7 +43,7 @@ api.interceptors.response.use(
 // Sign-up - email and Firebase token
 const signUp = async (email, firebase_token) => {
   try {
-    const response = await api.post('/userauth/', { email, firebase_token });
+    const response = await api.post('/onboarding/userauth/', { email, firebase_token });
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -56,7 +56,7 @@ const login = async (firebase_token, email = null) => {
   try {
     const payload = { firebase_token };
     if (email) payload.email = email;
-    const response = await api.post('/userauth/', payload);
+    const response = await api.post('/onboarding/userauth/', payload);
     return response.data;
   } catch (error) {
     handleApiError(error);
