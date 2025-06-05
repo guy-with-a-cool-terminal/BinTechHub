@@ -10,40 +10,8 @@ from .serializers import PasswordEntrySerializer
 from .serializers import UserRegistrationSerializer, UserLoginSerializer
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
-from firebase_admin import auth as firebase_auth
 
 User = get_user_model()
-
-# firebase to handle login/signup so now we just verify here
-class FirebaseLoginView(APIView):
-    authentication_classes = []
-    permission_classes = [AllowAny]
-    def post(self,request):
-        print("🔥 FirebaseLoginView hit")
-        id_token = request.data.get('firebase_token')
-        if not id_token:
-            return Response({"detail": "Firebase token missing"}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            decoded_token = firebase_auth.verify_id_token(id_token)
-            uid = decoded_token['uid']
-            email = decoded_token.get('email')
-
-            user, created = User.objects.get_or_create(firebase_uid=uid, defaults={"email": email})
-            
-            if not created and user.email != email:
-                user.email = email
-                user.save()
-
-            # Just return success and user info if needed (avoid sending your own JWT)
-            return Response({
-                "message": "User authenticated",
-                "uid": uid,
-                "email": email,
-                "created": created
-            }, status=status.HTTP_200_OK)
-        except Exception as e:
-            print("Firebase token verification error:", e)
-            return Response({"detail": "Invalid token"},status=status.HTTP_401_UNAUTHORIZED)
     
 '''Password management views'''
 # Pagination class
