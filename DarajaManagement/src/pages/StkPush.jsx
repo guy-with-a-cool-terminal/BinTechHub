@@ -207,9 +207,8 @@ function StkPush() {
                 disabled={loading}
               >
                 <option value="">Select a service type</option>
-                <option value="Paybill">Paybill</option>
-                <option value="Buy Goods">Buy Goods</option>
-                <option value="Airtime">Airtime</option>
+                <option value="Paybill">E-Commerce</option>
+                <option value="Buy Goods">Captive-Portal</option>
               </select>
               <p className="text-gray-400 text-xs mt-1 italic">
                 Choose the type of service for your transaction.
