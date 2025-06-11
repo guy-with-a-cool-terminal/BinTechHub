@@ -9,7 +9,7 @@ from decouple import config
 from django_daraja.mpesa.core import MpesaClient
 import json
 import logging
-from ..models import Payment,User
+from ..models import Payment,Customer
 
 logger = logging.getLogger(__name__)
 
@@ -151,8 +151,8 @@ def mpesa_callback(request):
         if float(actual_amount) != float(amount):
             return JsonResponse({"error": "Amount mismatch. Payment is invalid."}, status=400)
                         
-        # link payments to the user,create one if doesn't exist
-        user,_ = User.objects.get_or_create(phone_number=phone_number)            
+        # link payments to the customer,create one if doesn't exist
+        customer,_ = Customer.objects.get_or_create(phone_number=phone_number)            
         # Find payment record by checkout_request_id or create if missing
         payment,created = Payment.objects.get_or_create(
             checkout_request_id=checkout_id,
@@ -163,7 +163,7 @@ def mpesa_callback(request):
                 "status": "Success" if result_code == 0 else "Failed",
                 "transaction_type": "STK Push",
                 "reference": "payment",
-                "user": user,
+                "customer": customer,
                 "service_type": "generic"  # fallback service_type
             }
         )
@@ -172,7 +172,7 @@ def mpesa_callback(request):
             payment.mpesa_receipt = mpesa_receipt
             payment.status = "Success" if result_code == 0 else "Failed"
             payment.transaction_date = transaction_datetime
-            payment.user = user
+            payment.customer = customer
             payment.phone_number = phone_number
             payment.amount = amount
         # ONLY if service_type is captive_portal
