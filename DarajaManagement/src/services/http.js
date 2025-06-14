@@ -1,4 +1,5 @@
 import axios from 'axios';
+import AuthApi from './AuthApi';
 
 const isDev = window.location.hostname === 'localhost';
 const API_BASE_URL = isDev 
@@ -14,10 +15,12 @@ const http = axios.create({
 });
 
 // --- Request Interceptor ---
-http.interceptors.request.use((config) => {
-  const token = localStorage.getItem('firebase_token');
-  if (token && !config.url.endsWith('/userauth/')) {
-    config.headers['Authorization'] = `Bearer ${token}`;
+http.interceptors.request.use(async (config) => {
+  if (!config.url.endsWith('/userauth/')) {
+    const token = await AuthApi.getFreshToken();
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
   }
   return config;
 }, (error) => Promise.reject(error));

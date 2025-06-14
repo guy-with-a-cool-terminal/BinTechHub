@@ -1,4 +1,5 @@
 import http from "./http";
+import { getAuth } from "firebase/auth";
 
 // --- AUTH API ---
 
@@ -30,6 +31,22 @@ const login = async (firebase_token, email = null) => {
 const logout = () => {
   localStorage.removeItem('firebase_token');
   window.location.replace('/login');
+};
+
+// refresh firebase token
+const getFreshToken = async () =>{
+  try{
+  const user = getAuth().currentUser;
+  if(user){
+    const token = await user.getIdToken(true);
+    localStorage.setItem('firebase_token',token);
+    return token
+  }
+  return null;
+}catch (error){
+  handleApiError(error)
+  throw new Error('Failed to refresh Token')
+}
 };
 
 // --- ERROR HANDLER ---
@@ -69,4 +86,5 @@ export default {
   signUp,
   login,
   logout,
+  getFreshToken,
 };
