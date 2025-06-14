@@ -9,10 +9,10 @@ class DarajaCredential(models.Model):
         ('production', 'Production'),
     )
 
-    SERVICE_TYPE_CHOICES = (
-        ('c2b', 'C2B'),
-        ('b2c', 'B2C'),
-        ('b2b', 'B2B'),
+    SERVICE_USAGE_CHOICES = (
+        ('generic', 'Generic'),
+        ('ecommerce', 'E-commerce'),
+        ('captive_portal', 'Captive Portal'),
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='daraja_credentials')
@@ -21,8 +21,8 @@ class DarajaCredential(models.Model):
     shortcode = models.CharField(max_length=20)
     passkey = models.CharField(max_length=255)
     environment = models.CharField(max_length=20, choices=ENVIRONMENT_CHOICES)
-    serviceType = models.CharField(max_length=20, choices=SERVICE_TYPE_CHOICES)
+    usage_type = models.CharField(max_length=30, choices=SERVICE_USAGE_CHOICES, default='generic')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.email} - {self.environment} - {self.serviceType}"
+        return f"{self.user.email} - {self.environment} - {self.usage_type}"

@@ -3,6 +3,7 @@ import { Network, Phone, DollarSign, Filter } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { Link } from 'react-router-dom';
+import { initiateAndConfirmPayment } from '../services/Stkpushapi';
 
 function StkPush() {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -22,60 +23,85 @@ function StkPush() {
     { id: 4, phone: '254734567890', amount: 750, type: 'Buy Goods', date: '2024-07-18 09:45 AM', status: 'Pending' },
     { id: 5, phone: '254745678901', amount: 1200, type: 'Paybill', date: '2024-07-17 06:00 PM', status: 'Success' },
   ];
+const normalizePhone = (input) => {
+  const cleaned = input.replace(/\D/g, '');
+  if (/^07\d{8}$/.test(cleaned) || /^01\d{8}$/.test(cleaned)) {
+    return '254' + cleaned.slice(1);
+  }
+  return cleaned;
+};
 
-  // Form validation function
-  const validateForm = () => {
-    const errors = {};
+const validateForm = () => {
+  const errors = {};
+  const normalizedPhone = normalizePhone(phoneNumber);
 
-    // Phone validation: Kenyan phone number starts with 2547 and 12 digits total
-    if (!/^2547\d{8}$/.test(phoneNumber)) {
-      errors.phoneNumber = 'Enter a valid Kenyan phone number starting with 2547 and 12 digits.';
+  if (!/^254(7|1)\d{8}$/.test(normalizedPhone)) {
+    errors.phoneNumber = 'Enter a valid Kenyan mobile number starting with 07 or 01.';
+  }
+
+  const amt = Number(amount);
+  if (!amt || amt <= 0) {
+    errors.amount = 'Amount must be a positive number.';
+  } else if (amt > 300000) {
+    errors.amount = 'Amount must not exceed 300,000 Ksh.';
+  }
+
+  if (!serviceType) {
+    errors.serviceType = 'Please select a service type.';
+  }
+
+  setFormErrors(errors);
+  return Object.keys(errors).length === 0;
+};
+
+const handleSubmitTransaction = async (e) => {
+  e.preventDefault();
+
+  const normalizedPhone = normalizePhone(phoneNumber);
+
+  if (!validateForm()) return;
+
+  setLoading(true);
+  setSubmitMessage(null);
+
+  try {
+    await initiateAndConfirmPayment(
+      normalizedPhone,
+      parseInt(amount, 10),
+      serviceType,
+      () => setSubmitMessage({ type: 'success', text: 'Payment successful!' }),
+      (failMsg) => setSubmitMessage({ type: 'error', text: failMsg || 'Payment failed.' })
+    );
+    setPhoneNumber('');
+    setAmount('');
+    setServiceType('');
+    setFormErrors({});
+  } catch (error) {
+    setSubmitMessage({ type: 'error', text: error.message });
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handlePhoneChange = (e) => {
+  const input = e.target.value;
+  setPhoneNumber(input); // no normalization here
+  if (formErrors.phoneNumber) {
+    setFormErrors((prev) => ({ ...prev, phoneNumber: undefined }));
+  }
+};
+
+  const handleAmountChange = (e) => {
+    setAmount(e.target.value);
+    if (formErrors.amount) {
+      setFormErrors((prev) => ({ ...prev, amount: undefined }));
     }
-
-    // Amount validation: positive number and max limit (e.g. 100000)
-    const amt = Number(amount);
-    if (!amt || amt <= 0) {
-      errors.amount = 'Amount must be a positive number.';
-    } else if (amt > 100000) {
-      errors.amount = 'Amount must not exceed 100,000 Ksh.';
-    }
-
-    // Service type validation
-    if (!serviceType) {
-      errors.serviceType = 'Please select a service type.';
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
   };
 
-  // Handle form submit
-  const handleSubmitTransaction = async (e) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
-    setLoading(true);
-    setSubmitMessage(null);
-
-    try {
-      // Simulate API call delay
-      await new Promise((r) => setTimeout(r, 1500));
-
-      // In a real app, send data to API here and handle response
-      console.log('STK Push Request:', { phoneNumber, amount, serviceType });
-
-      setSubmitMessage({ type: 'success', text: 'STK Push transaction submitted successfully!' });
-      setPhoneNumber('');
-      setAmount('');
-      setServiceType('');
-      setFormErrors({});
-    } catch (error) {
-      setSubmitMessage({ type: 'error', text: 'Failed to submit transaction. Please try again.' });
-    } finally {
-      setLoading(false);
+  const handleServiceChange = (e) => {
+    setServiceType(e.target.value);
+    if (formErrors.serviceType) {
+      setFormErrors((prev) => ({ ...prev, serviceType: undefined }));
     }
   };
 
@@ -140,7 +166,7 @@ function StkPush() {
                   name="phoneNumber"
                   placeholder="e.g., 2547XXXXXXXXX"
                   value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  onChange={handlePhoneChange}
                   aria-invalid={!!formErrors.phoneNumber}
                   aria-describedby={formErrors.phoneNumber ? 'phone-error' : undefined}
                   className={`w-full p-3 pl-10 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-800 transition duration-150 ease-in-out ${
@@ -171,7 +197,7 @@ function StkPush() {
                   name="amount"
                   placeholder="e.g., 1500"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={handleAmountChange}
                   aria-invalid={!!formErrors.amount}
                   aria-describedby={formErrors.amount ? 'amount-error' : undefined}
                   className={`w-full p-3 pl-10 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-800 transition duration-150 ease-in-out ${
@@ -198,7 +224,7 @@ function StkPush() {
                 id="serviceType"
                 name="serviceType"
                 value={serviceType}
-                onChange={(e) => setServiceType(e.target.value)}
+                onChange={handleServiceChange}
                 aria-invalid={!!formErrors.serviceType}
                 aria-describedby={formErrors.serviceType ? 'service-error' : undefined}
                 className={`w-full p-3 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-800 bg-white appearance-none pr-8 transition duration-150 ease-in-out ${
@@ -207,8 +233,8 @@ function StkPush() {
                 disabled={loading}
               >
                 <option value="">Select a service type</option>
-                <option value="Paybill">E-Commerce</option>
-                <option value="Buy Goods">Captive-Portal</option>
+                <option value="ecommerce">E-Commerce</option>
+                <option value="captive_portal">Captive-Portal</option>
               </select>
               <p className="text-gray-400 text-xs mt-1 italic">
                 Choose the type of service for your transaction.
@@ -227,7 +253,7 @@ function StkPush() {
               </Link>
               <button
                 type="submit"
-                disabled={loading || Object.keys(formErrors).length > 0}
+                disabled={loading}
                 className={`bg-indigo-600 text-white p-3 px-6 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-150 ease-in-out ${
                   loading ? 'opacity-70 cursor-not-allowed' : ''
                 }`}

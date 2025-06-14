@@ -19,6 +19,12 @@ class STKPushAPIView(APIView):
         phone_number = request.data.get("phone_number")
         amount = request.data.get("amount")
         service_type = request.data.get("service_type", "generic") # captive portals,ecommerce etc
+        print("Received service_type from frontend:", service_type)
+        ALLOWED_SERVICE_TYPES = ["ecommerce", "captive_portal", "generic"]
+        
+        if service_type not in ALLOWED_SERVICE_TYPES:
+            logger.warning(f"Unknown service_type '{service_type}' received. Defaulting to 'generic'.")
+            service_type = "generic"
                 
         if not phone_number or not amount:
             return Response({
@@ -42,7 +48,7 @@ class STKPushAPIView(APIView):
             response = cl.stk_push(
                 phone_number,
                 amount,
-                "CaptivePortal", #account ref
+                "Avalinc", #account ref
                 "Payment Service",
                 callback_url
             )  

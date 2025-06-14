@@ -167,9 +167,9 @@ function Credentials() {
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white"
               >
                 <option value="">Select service type</option>
-                <option value="c2b">C2B</option>
-                <option value="b2c">B2C</option>
-                <option value="b2b">B2B</option>
+                <option value="ecommerce">E-Commerce</option>
+                <option value="captive_portal">Captive-Portal</option>
+                <option value="generic">Other</option>
               </select>
             </div>
           </div>

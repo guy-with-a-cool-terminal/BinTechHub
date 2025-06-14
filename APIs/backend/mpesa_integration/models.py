@@ -16,7 +16,7 @@ class Payment(models.Model):
         ("Failed", "Failed"),
     ]
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
-    phone_number = models.CharField(max_length=15)  # Useful for quick reference
+    phone_number = models.CharField(max_length=15)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     mpesa_receipt = models.CharField(max_length=50, unique=True, null=True, blank=True)
     transaction_date = models.DateTimeField(null=True, blank=True)
@@ -26,7 +26,7 @@ class Payment(models.Model):
     checkout_request_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
     access_duration_minutes = models.PositiveIntegerField(null=True, blank=True)
     start_time = models.DateTimeField(null=True, blank=True)
-    service_type = models.CharField(max_length=50, null=True, blank=True)  # e.g., "captive_portal", "ecommerce"
+    service_type = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
         return f"Payment {self.mpesa_receipt or self.checkout_request_id} - {self.status}"
