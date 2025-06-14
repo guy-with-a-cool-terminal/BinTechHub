@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { saveDarajaCredentials } from '../services/CredsApi';
+import { saveDarajaCredentials } from '../api'; // ✅ Use function from api.js instead of importing http directly
 
 function Credentials() {
   const [showPasskey, setShowPasskey] = useState(false);
@@ -21,14 +21,8 @@ function Credentials() {
   };
 
   const handleSaveCredentials = async () => {
-    const isFormComplete = Object.values(formData).every((val) => val.trim() !== '');
-    if (!isFormComplete) {
-      alert('Please fill in all fields before submitting.');
-      return;
-    }
-
     try {
-      const response = await saveDarajaCredentials(formData);
+      const response = await saveDarajaCredentials(formData); // ✅ Abstracted API call
       alert('Credentials saved successfully!');
       console.log(response);
     } catch (error) {
@@ -48,10 +42,9 @@ function Credentials() {
         </p>
 
         <form
-          autoComplete="off"
           onSubmit={(e) => {
             e.preventDefault();
-            handleSaveCredentials();
+            handleSaveCredentials(); // ✅ Use updated handler
           }}
           className="space-y-6"
         >
@@ -63,7 +56,6 @@ function Credentials() {
             <input
               type="text"
               id="consumerKey"
-              autoComplete="new-password"
               value={formData.consumerKey}
               onChange={handleChange}
               placeholder="Enter Consumer Key"
@@ -80,7 +72,6 @@ function Credentials() {
               <input
                 type={showPasskey ? 'text' : 'password'}
                 id="consumerSecret"
-                autoComplete="new-password"
                 value={formData.consumerSecret}
                 onChange={handleChange}
                 placeholder="Enter Consumer Secret"
@@ -105,7 +96,6 @@ function Credentials() {
             <input
               type="text"
               id="shortcode"
-              autoComplete="new-password"
               value={formData.shortcode}
               onChange={handleChange}
               placeholder="Enter Shortcode"
@@ -122,7 +112,6 @@ function Credentials() {
               <input
                 type={showPasskey ? 'text' : 'password'}
                 id="passkey"
-                autoComplete="new-password"
                 value={formData.passkey}
                 onChange={handleChange}
                 placeholder="Enter Passkey"

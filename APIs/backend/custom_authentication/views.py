@@ -5,13 +5,14 @@ from rest_framework.views import APIView
 from firebase_admin import auth as firebase_auth
 from django.contrib.auth import get_user_model
 
-User = get_user_model()  #get whatever user model we have on our app
+User = get_user_model()
 
 # view handling login/signup
 class FirebaseAuthenticationView(APIView):
     permission_classes = [AllowAny]
     def post(self,request):
         id_token = request.data.get('firebase_token') # this is the name of the token we receive from firebase on the frontend
+        print(id_token)
         if not id_token:
             return Response({"detail": "Firebase Token Missing!!"},status=status.HTTP_400_BAD_REQUEST)
         try:
