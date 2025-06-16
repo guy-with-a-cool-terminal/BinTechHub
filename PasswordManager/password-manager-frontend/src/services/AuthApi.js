@@ -1,47 +1,12 @@
-import axios from 'axios';
-
-const isDev = window.location.hostname === 'localhost';
-const API_BASE_URL = isDev 
-  ? 'http://127.0.0.1:8000/api' 
-  : 'https://bintechhubapi.onrender.com/api';
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 5000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('firebase_token');
-    // Skip Authorization header for userauth endpoint
-    if (token && !config.url.endsWith('/userauth/')) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      localStorage.removeItem('firebase_token');
-      window.location.replace('/login');
-    }
-    return Promise.reject(error);
-  }
-);
+import http from "./http";
+import { getAuth } from "firebase/auth";
 
 // --- AUTH API ---
 
 // Sign-up - email and Firebase token
 const signUp = async (email, firebase_token) => {
   try {
-    const response = await api.post('/onboarding/userauth/', { email, firebase_token });
+    const response = await http.post('/onboarding/userauth/', { email, firebase_token });
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -54,7 +19,7 @@ const login = async (firebase_token, email = null) => {
   try {
     const payload = { firebase_token };
     if (email) payload.email = email;
-    const response = await api.post('/onboarding/userauth/', payload);
+    const response = await http.post('/onboarding/userauth/', payload);
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -66,6 +31,22 @@ const login = async (firebase_token, email = null) => {
 const logout = () => {
   localStorage.removeItem('firebase_token');
   window.location.replace('/login');
+};
+
+// refresh firebase token
+const getFreshToken = async () =>{
+  try{
+  const user = getAuth().currentUser;
+  if(user){
+    const token = await user.getIdToken(true);
+    localStorage.setItem('firebase_token',token);
+    return token
+  }
+  return null;
+}catch (error){
+  handleApiError(error)
+  throw new Error('Failed to refresh Token')
+}
 };
 
 // --- ERROR HANDLER ---
@@ -105,4 +86,5 @@ export default {
   signUp,
   login,
   logout,
+  getFreshToken,
 };
