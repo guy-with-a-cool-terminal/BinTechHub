@@ -1,105 +1,138 @@
----
+1. **Models Overview**
 
-# Step-by-Step Plan for Adding Multi-Developer Support to Your DRF M-Pesa API
+### `Customer`
 
----
+* Represents a customer identified by their phone number.
+* Used to link payments to individual users.
 
-### **What you have done already:**
+### `MpesaCredential`
 
-* A working **Payment and User (payer) model** that tracks payments per phone number.
-* API endpoints to:
+* Stores M-Pesa credentials **per merchant** (shortcode).
+* Includes `consumer_key`, `consumer_secret`, `passkey`, and environment (sandbox or production).
 
-  * Trigger STK Push with fixed Daraja credentials from `.env`.
-  * Receive M-Pesa callback to update payment status.
-  * Query payment status.
-* No authentication or developer-level separation yet.
-* Payment flow and database schema suited for single-developer (yourself).
+### `Payment`
 
----
-
-### **Goal:**
-
-Allow multiple developers to use your API **independently**, each with their own Daraja credentials, and keep payment data separate by developer, without affecting how payers or payments work.
+* Logs every payment made through STK push.
+* Stores status (`Pending`, `Success`, `Failed`), `CheckoutRequestID`, M-Pesa receipt number, amount, and associated `shortcode`.
+* Also tracks optional data like `service_type`, `access_duration_minutes`, and `start_time` for things like captive portals.
 
 ---
 
-### **Step 1: Design a Developer Model**
+## ⚙️ 2. **DynamicMpesaClient Class**
 
-* Create a new **Developer** model that stores:
+This class is a **custom implementation** that replaces the static `django-daraja` SDK. Its job is to:
 
-  * Developer identity info (email, Firebase UID, etc.).
-  * Their unique Daraja credentials (consumer key & secret).
-* This model will link payments to the developer making the API call.
+### `__init__()`
 
----
+* Accepts merchant-specific credentials (from `MpesaCredential`) and stores them.
+* Chooses base URL depending on whether you're in `"sandbox"` or `"production"` mode.
+* Automatically fetches an **OAuth access token** from M-Pesa.
 
-### **Step 2: Add Developer Link to Payment Model**
+### `_get_access_token()`
 
-* Add a foreign key from Payment to Developer.
-* This links every payment to the developer responsible for it.
-* The User model (payer) stays the same, tracking phone numbers of payers.
+* Authenticates using the provided `consumer_key` and `consumer_secret` and retrieves a Bearer token used for all requests.
 
----
+### `stk_push(...)`
 
-### **Step 3: Implement Authentication**
+* Sends an STK Push request to M-Pesa using the merchant’s shortcode.
+* Dynamically builds the encoded password using the merchant’s passkey + timestamp.
+* Sends the payload to M-Pesa’s `/stkpush/processrequest` endpoint.
 
-* Integrate Firebase Authentication on your frontend.
-* Pass Firebase ID tokens with every API request.
-* On the backend, verify Firebase token to identify the calling developer.
-* Retrieve the developer’s record from the DB using the Firebase UID.
+### `payment_status(receipt_number)`
 
----
-
-### **Step 4: Modify STK Push Logic**
-
-* Instead of loading Daraja credentials from `.env`, load them from the **calling developer’s record**.
-* Initialize the MpesaClient with the developer's credentials.
-* Proceed with STK push as usual.
+* Placeholder/mock for confirming a payment from M-Pesa using a receipt number.
+* You can replace it with actual M-Pesa `transaction status` queries (optional).
 
 ---
 
-### **Step 5: Link Payments to Developers in API**
+## 🌐 3. **Views**
 
-* When creating the Payment record after STK push, link it to the developer identified from the token.
-* On payment callbacks:
+### `STKPushAPIView` (POST)
 
-  * Identify the developer via payment’s developer field.
-  * No changes needed to callback except maybe logging for developer context.
+This is the **entry point for initiating payment**:
+
+* Accepts:
+
+  * `phone_number` (user initiating payment),
+  * `amount`,
+  * `shortcode` (to load correct merchant credentials),
+  * optional `service_type`.
+* Validates inputs.
+* Loads the corresponding `MpesaCredential` for the shortcode.
+* Creates an instance of `DynamicMpesaClient`.
+* Makes the `stk_push()` call to M-Pesa.
+* If successful:
+
+  * Extracts `CheckoutRequestID`.
+  * Logs the request in the `Payment` table with status `"Pending"`.
+
+### `mpesa_callback` (POST)
+
+This view is called **asynchronously by M-Pesa** after the user completes or cancels the payment:
+
+* Validates the POST payload.
+* Extracts details like:
+
+  * `Amount`, `MpesaReceiptNumber`, `PhoneNumber`, `TransactionDate`, `CheckoutRequestID`.
+* Parses the timestamp into a proper `datetime` object.
+* Loads the original payment from `Payment` using `CheckoutRequestID`.
+* Loads correct `MpesaCredential` using `payment.shortcode`.
+* Optionally verifies the payment status (e.g. to match amounts).
+* Updates the `Payment` object with:
+
+  * `status` (Success or Failed),
+  * `transaction_date`, `receipt number`, `phone number`.
+* Links the payment to a `Customer` (create if doesn't exist).
+* If `service_type == captive_portal` and the payment succeeded, calculates and stores internet access time.
+
+### `PaymentStatusView` (GET)
+
+Used by your frontend to **poll and check status** of a payment using the `checkout_id`.
+
+* If payment exists: return its status.
+* If not: returns `"Pending"`.
 
 ---
 
-### **Step 6: Secure API Endpoints**
+## 🧮 4. `calculate_access_time(amount)`
 
-* Restrict sensitive API views (STKPush, PaymentStatus) to **authenticated developers only**.
-* Reject requests with invalid or missing Firebase tokens.
+Business logic for captive portal:
 
----
-
-### **Step 7: Update Frontend SDK**
-
-* Require developers to authenticate with Firebase.
-* Pass Firebase token in API calls.
-* Make no changes to payment data (phone, amount, etc.), just add auth header.
+* Converts M-Pesa amount to minutes of access time.
+* (e.g. 50 KES → 120 minutes)
 
 ---
 
-### **Step 8: Test and Validate**
+## ✅ Is It Dynamic?
 
-* Test with multiple developer accounts, each with their own Daraja credentials.
-* Ensure payments are correctly attributed to the right developer.
-* Verify isolation — developers cannot see or affect each other’s data.
+Yes — everything is **fully dynamic per shortcode**, meaning:
+
+* You can onboard multiple businesses using different M-Pesa credentials.
+* Each time an STK Push is sent or a callback is received, your system uses the **correct credentials for that merchant** based on the shortcode.
 
 ---
 
-### **Summary:**
+## 📌 What You Need to Provide
 
-| Existing             | Change Needed? | Where to Modify                | Notes                                       |
-| -------------------- | -------------- | ------------------------------ | ------------------------------------------- |
-| `User` (payer) model | No             | N/A                            | Remains for phone tracking                  |
-| `Payment` model      | Yes            | Add developer FK               | Link payments to developers                 |
-| `STKPushAPIView`     | Yes            | Load creds from developer      | Use developer’s Daraja keys instead of .env |
-| `mpesa_callback`     | Minimal        | Possibly add developer logging | Payments linked by checkout ID still valid  |
-| Auth system          | Yes            | Add Firebase auth validation   | Identify calling developer                  |
-| API permissions      | Yes            | Restrict sensitive views       | Allow only authenticated developers         |
-| Frontend SDK         | Yes            | Add Firebase token handling    | Pass token in API calls                     |
+As the developer or service owner, you’re responsible for:
 
+* Setting up **callback URL** on M-Pesa dashboard.
+* Providing correct `shortcode`, `consumer_key`, `consumer_secret`, and `passkey` per merchant (stored in DB).
+* Making sure your frontend sends:
+
+  * `phone_number`, `amount`, and the correct `shortcode`.
+
+---
+
+## 🔒 Security Notes
+
+* Ensure `MpesaCredential` fields are encrypted or secured (e.g. using Django-encrypted-fields or vault).
+* You should validate callback authenticity (IP whitelisting or HMAC).
+
+---
+
+Let me know if you’d like:
+
+* Actual M-Pesa `TransactionStatus` API instead of the placeholder.
+* A webhook signature verification system.
+* A frontend JS/React/Vue snippet for initiating STK Pushes.

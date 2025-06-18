@@ -1,6 +1,6 @@
 import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/20/solid'; // Import icons
 import { useNavigate } from 'react-router-dom'; // Import navigate
-import api from '../services/api';
+import AuthApi from '../services/AuthApi';
 import React, { useState } from 'react'; // Import useState
 import { getAuth, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../services/FirebaseAuth/firebase';
@@ -64,7 +64,7 @@ export default function SignUpForm() {
       const idToken = await userCredential.user.getIdToken();
       localStorage.setItem('firebase_token', idToken); 
       // send user data to backend
-      await api.signUp(email,idToken);
+      await AuthApi.signUp(email,idToken);
       navigate('/dashboard');
     } catch (err) {
       console.error('signup failed:', err);
@@ -92,7 +92,7 @@ export default function SignUpForm() {
       const user = result.user;
       const idToken = await user.getIdToken();
       localStorage.setItem('firebase_token', idToken);
-      await api.signUp(user.email,idToken);
+      await AuthApi.signUp(user.email,idToken);
       navigate('/login');
     } catch (err) {
       console.error('Google sign-up failed:', err);

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Header from '../components/Header';
-import api from "../services/api";
+import CredsApi from "../services/CredsApi";
 
 const AddPassword = () => {
   const [title, setTitle] = useState("");
@@ -55,7 +55,7 @@ const AddPassword = () => {
       password,
     };
     try {
-          const response = await api.createPassword(passwordData);
+          const response = await CredsApi.createPassword(passwordData);
           alert("Password saved successfully!");
           console.log(response);
           setTitle("");
