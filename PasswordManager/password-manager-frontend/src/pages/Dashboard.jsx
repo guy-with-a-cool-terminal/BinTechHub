@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Pencil, Trash, ChevronDown, MoreVertical } from 'lucide-react';
 import Header from '../components/Header';
-import api from '../services/api';
+import CredsApi from '../services/CredsApi';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
@@ -16,7 +16,7 @@ const Dashboard = () => {
     const fetchPasswords = async () => {
       setLoading(true);
       try {
-        const response = await api.getPasswords(currentPage);
+        const response = await CredsApi.getPasswords(currentPage);
         setPasswords(response.results);
         setTotalPages(response.total_pages);
       } catch (error) {

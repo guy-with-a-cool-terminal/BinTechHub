@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Header from "../components/Header";
 import { HiOutlineSearchCircle, HiCheckCircle, HiExclamationCircle, HiX } from "react-icons/hi";
 import { motion, AnimatePresence } from "framer-motion";
-import api from "../services/api";
+import CredsApi from "../services/CredsApi";
 
 // import your API functions (commented out for now)
 // import { fetchRepositories, scanRepository } from "../services/api";
@@ -27,7 +27,7 @@ const GithubScan = () => {
   // Example handler for connecting GitHub (placeholder)
   const handleGithubConnect = () => {
     try{
-      api.startGitHubOAuth();
+      CredsApi.startGitHubOAuth();
     }catch (error){
       alert("Failed to start GitHub OAuth. Please try again.");
       console.error(error);

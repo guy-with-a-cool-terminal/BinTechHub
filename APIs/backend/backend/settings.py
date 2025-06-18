@@ -132,6 +132,7 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "https://secure-vault-bintech.vercel.app",
     "https://darajacredentialsmanager.vercel.app",
+    "http://localhost:8080",
     "http://localhost:5173",  # for dev
 ]
 

@@ -38,38 +38,6 @@ api.interceptors.response.use(
   }
 );
 
-// --- AUTH API ---
-
-// Sign-up - email and Firebase token
-const signUp = async (email, firebase_token) => {
-  try {
-    const response = await api.post('/onboarding/userauth/', { email, firebase_token });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw new Error('Sign-up failed');
-  }
-};
-
-// Login - send firebase_token (email optional)
-const login = async (firebase_token, email = null) => {
-  try {
-    const payload = { firebase_token };
-    if (email) payload.email = email;
-    const response = await api.post('/onboarding/userauth/', payload);
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw new Error('Login failed');
-  }
-};
-
-// Logout - clear token and redirect
-const logout = () => {
-  localStorage.removeItem('firebase_token');
-  window.location.replace('/login');
-};
-
 // --- PASSWORD APIs ---
 
 const createPassword = async (passwordData) => {
@@ -207,9 +175,6 @@ const handleApiError = (error) => {
 };
 
 export default {
-  signUp,
-  login,
-  logout,
   createPassword,
   getPasswords,
   getPassword,
